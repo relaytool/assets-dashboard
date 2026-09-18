@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FM Assets Dashboard</title>
+
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+<main class="app-shell">
+
+    <header class="topbar">
+
+        <div>
+            <div class="eyebrow">FM OPERATIONS</div>
+
+            <h1>Assets Dashboard</h1>
+
+            <p class="muted">
+                UB11 inbound, outbound and warehouse asset inventory.
+            </p>
+        </div>
+
+        <div class="account-area">
+
+            <img
+                id="user-photo"
+                class="user-photo hidden"
+                alt="User"
+            >
+
+            <div>
+                <div
+                    id="user-name"
+                    class="user-name"
+                >
+                    Not signed in
+                </div>
+
+                <div
+                    id="user-email"
+                    class="muted"
+                ></div>
+            </div>
+
+            <button
+                id="sign-out"
+                class="secondary hidden"
+            >
+                Sign out
+            </button>
+
+        </div>
+
+    </header>
+
+    <nav class="menu-bar" aria-label="Quick links">
+        <a class="active" href="index.html">Dashboard</a>
+        <a href="movement-logger.html">Record movement</a>
+        <a href="#warehouse-section">Warehouse</a>
+        <a href="#clients-section">Clients</a>
+        <a href="#audit-trail">Audit trail</a>
+    </nav>
+
+
+    <!-- LOGIN -->
+
+    <section
+        id="login-card"
+        class="card login-card"
+    >
+
+        <h2>Sign in to continue</h2>
+
+        <p class="muted">
+            Sign in with Google to access your FM spreadsheet.
+        </p>
+
+        <div id="google-signin-button"></div>
+
+        <button
+            id="grant-access"
+            class="primary hidden"
+        >
+            Allow Sheets & Drive access
+        </button>
+
+        <p
+            id="auth-status"
+            class="status"
+        ></p>
+
+    </section>
+
+
+    <!-- DASHBOARD -->
+
+    <section
+        id="dashboard"
+        class="hidden"
+    >
+
+        <!-- TOOLBAR -->
+
+        <div class="toolbar card">
+
+            <div>
+
+                <div class="eyebrow">
+                    SOURCE
+                </div>
+
+                <div
+                    id="workbook-name"
+                    class="source-name"
+                >
+                    Not connected
+                </div>
+
+                <div
+                    id="sync-status"
+                    class="muted"
+                >
+                    Waiting for connection
+                </div>
+
+            </div>
+
+            <div class="toolbar-actions">
+
+                <button
+                    id="manage-inventory"
+                    class="secondary"
+                >
+                    Manage inventory
+                </button>
+
+                <button
+                    id="refresh"
+                    class="secondary"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- LOCATION -->
+
+        <div class="location-banner">
+
+            <div>
+
+                <div class="eyebrow">
+                    LOCATION
+                </div>
+
+                <strong>
+                    UB11
+                </strong>
+
+            </div>
+
+            <div
+                id="dashboard-date"
+                class="muted"
+            ></div>
+
+        </div>
+
+
+        <!-- WAREHOUSE ASSETS -->
+
+        <section id="warehouse-section" class="card warehouse-card">
+            <div class="section-heading">
+                <div>
+                    <div class="eyebrow">WAREHOUSE</div>
+                    <h2>Assets at warehouse</h2>
+                    <p class="muted">
+                        Current warehouse stock by asset type.
+                    </p>
+                </div>
+            </div>
+        
+            <div id="warehouse-assets" class="warehouse-assets-grid"></div>
+        </section>
+
+
+        <!-- CLIENT ASSET OVERVIEW -->
+
+        <section id="clients-section" class="card clients-section">
+
+            <div class="section-heading client-section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        TODAY
+                    </div>
+
+                    <h2>
+                        Assets with clients
+                    </h2>
+
+                    <p class="muted">
+                        Clients are taken from the Client List in the Assets Inventory Ledger.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="client-search-wrap">
+
+                <input
+                    id="client-search"
+                    class="client-search"
+                    type="search"
+                    placeholder="Search clients..."
+                    autocomplete="off"
+                    aria-label="Search clients"
+                >
+
+            </div>
+
+
+            <div
+                id="client-cards"
+                class="client-cards"
+            ></div>
+
+        </section>
+
+
+        <!-- LOADS -->
+
+        <div class="section-grid">
+
+            <!-- INBOUND -->
+
+            <section class="card load-section">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            TODAY
+                        </div>
+
+                        <h2>
+                            Inbound loads
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="inbound-badge"
+                        class="badge"
+                    >
+                        0
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Client</th>
+                                <th>Planned arrival</th>
+                                <th class="num">Pallets</th>
+                                <th>Bags / loose parcels</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="inbound-body"
+                        ></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- OUTBOUND -->
+
+            <section class="card load-section">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            TODAY
+                        </div>
+
+                        <h2>
+                            Outbound loads
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="outbound-badge"
+                        class="badge"
+                    >
+                        0
+                    </span>
+
+                </div>
+
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Client</th>
+                                <th>Planned arrival</th>
+                                <th class="num">Pallets</th>
+                                <th>Bags / loose parcels</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody
+                            id="outbound-body"
+                        ></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </div>
+
+
+        <!-- MOVEMENT -->
+
+        <section class="card movement-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        MOVEMENT
+                    </div>
+
+                    <h2>
+                        Record asset movement
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <form id="movement-form" class="form-grid movement-form-multi">
+                <label>
+                    Client
+                    <select id="client" required>
+                        <option value="">Loading clients...</option>
+                    </select>
+                    <span id="client-help" class="field-help"></span>
+                </label>
+
+                <label>
+                    Movement
+                    <select id="movement" required>
+                        <option value="RECEIVED">Received</option>
+                        <option value="SENT">Sent</option>
+                        <option value="DISCARD">Discard</option>
+                    </select>
+                </label>
+
+                <label>
+                    Timestamp
+                    <input id="timestamp" type="time" required>
+                </label>
+
+                <div class="dashboard-asset-section">
+                    <div class="dashboard-asset-heading">
+                        <div>
+                            <div class="eyebrow">ASSETS</div>
+                            <h3>Asset types and quantities</h3>
+                        </div>
+                        <button id="add-asset-row" class="secondary" type="button">+ Add asset</button>
+                    </div>
+                    <div id="asset-rows" class="asset-rows"></div>
+                </div>
+
+                <div class="movement-preview" id="movement-preview">
+                    <span class="preview-label">ENTRY SUMMARY</span>
+                    <strong id="preview-text">Select a client and add one or more asset types with quantities.</strong>
+                </div>
+
+                <button class="primary submit-button" type="submit">Record movements</button>
+                <p id="movement-status" class="status"></p>
+            </form>
+
+        </section>
+
+
+        <!-- AUDIT TRAIL -->
+
+        <section id="audit-trail" class="card">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        AUDIT TRAIL
+                    </div>
+
+                    <h2>
+                        Recent asset movements
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="table-wrap"
+                id="Audit-trail-visibilityx"
+            >
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Client</th>
+                            <th>Movement</th>
+                            <th>Asset</th>
+                            <th class="num">Quantity</th>
+                            <th>User</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody
+                        id="transactions-body"
+                    ></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </section>
+
+</main>
+
+
+<!-- CLIENT DETAILS MODAL -->
+
+<div
+    id="client-details-modal"
+    class="modal hidden"
+>
+
+    <div
+        class="modal-backdrop"
+        data-close-client-details
+    ></div>
+
+
+    <div class="modal-card client-details-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="eyebrow">
+                    ASSETS WITH CLIENT
+                </div>
+
+                <h2 id="client-details-title">
+                    Client
+                </h2>
+
+                <p
+                    id="client-details-subtitle"
+                    class="muted"
+                ></p>
+
+            </div>
+
+
+            <button
+                id="close-client-details"
+                class="icon-button"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <section class="details-section client-assets-section">
+
+            <div class="details-section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        ASSET BREAKDOWN
+                    </div>
+
+                    <h3>
+                        Asset types with this client
+                    </h3>
+
+                    <p class="muted">
+                        Sent − Received. A negative number means the client has received more than it has sent.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="client-details-summary"
+                class="client-asset-summary"
+            ></div>
+
+        </section>
+
+
+        <section class="details-section client-graph-section">
+
+            <div class="details-section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        HISTORY
+                    </div>
+
+                    <h3 id="client-graph-title">
+                        Daily sent assets
+                    </h3>
+
+                    <p
+                        id="client-graph-subtitle"
+                        class="muted"
+                    ></p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="client-sent-graph"
+                class="client-sent-graph"
+            ></div>
+
+        </section>
+
+
+        <section class="details-section">
+
+            <div class="details-section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        LEDGER
+                    </div>
+
+                    <h3>
+                        Asset transactions
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Time</th>
+                            <th>Movement</th>
+                            <th>Asset type</th>
+                            <th class="num">Quantity</th>
+                            <th>User</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody
+                        id="client-details-transactions"
+                    ></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</div>
+
+
+<!-- INVENTORY MANAGER -->
+
+<div
+    id="inventory-modal"
+    class="modal hidden"
+>
+
+    <div
+        class="modal-backdrop"
+        data-close-modal
+    ></div>
+
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div class="eyebrow">
+                    WAREHOUSE
+                </div>
+
+                <h2>
+                    Manage asset inventory
+                </h2>
+
+                <p class="muted">
+                    Add new asset types, rename assets or remove asset types.
+                </p>
+
+            </div>
+
+            <button
+                id="close-inventory"
+                class="icon-button"
+                aria-label="Close"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="manage-form">
+
+            <label>
+
+                New asset type
+
+                <input
+                    id="new-asset-name"
+                    type="text"
+                    maxlength="100"
+                    placeholder="e.g. Roll cage"
+                >
+
+            </label>
+
+
+            <label>
+
+                Starting balance
+
+                <input
+                    id="new-asset-balance"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="0"
+                >
+
+            </label>
+
+
+            <button
+                id="add-asset"
+                class="primary"
+            >
+                Add asset type
+            </button>
+
+        </div>
+
+
+        <p
+            id="inventory-manage-status"
+            class="status"
+        ></p>
+
+
+        <div class="table-wrap manage-table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Asset type</th>
+                        <th class="num">Balance</th>
+                        <th class="actions-column">Actions</th>
+                    </tr>
+
+                </thead>
+
+                <tbody
+                    id="manage-inventory-body"
+                ></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script
+    src="https://accounts.google.com/gsi/client"
+    async
+    defer
+></script>
+
+<script src="config.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>
