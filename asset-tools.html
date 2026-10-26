@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#09090f">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Asset Tools</title>
+  <link rel="stylesheet" href="dashboard.css?v=asset-tools-20261014-v1">
+  <link rel="stylesheet" href="operations.css?v=asset-tools-20261014-v1">
+  <link rel="stylesheet" href="app-ui-polish.css?v=global-search-checklist-20261016-v2">
+  <link rel="stylesheet" href="asset-tools.css?v=asset-tools-20261014-v1">
+<link rel="stylesheet" href="mobile-graph-polish.css?v=20261026-v2"></head>
+<body>
+<div id="connection-loading" class="connection-loading hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div class="connection-loading-card"><span class="loading-spinner" aria-hidden="true"></span><strong id="connection-loading-title">Connecting to Google Sheets…</strong></div>
+</div>
+<main class="app-shell ops-page asset-tools-page">
+  <header class="topbar">
+    <div><div class="eyebrow">FM OPERATIONS</div><h1>Asset tools</h1><p class="muted">Asset conversions and client ledger corrections</p></div>
+    <div class="account-area"><img id="user-photo" class="user-photo hidden" alt="User"><div><div id="user-name" class="user-name">Not signed in</div><div id="user-email" class="muted"></div></div><button id="sign-out" class="secondary hidden">Sign out</button></div>
+  </header>
+  <nav class="quick-nav" aria-label="Quick links">
+    <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="quick-links"><span class="menu-toggle-icon">☰</span><span>Quick links</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span></button>
+    <div id="quick-links" class="menu-links">
+      <a href="index.html">Dashboard</a>
+      <a href="asset-tools.html" class="active">Asset tools</a>
+      <a href="movement-logger.html">Record movement</a>
+      <a href="routine-outbounds.html">Routine outbounds</a>
+<a href="checklist.html">Shift checklist</a>
+      <a href="alerts.html">Alerts</a>
+      <a href="index.html#warehouse-section">Warehouse</a>
+      <a href="index.html#clients-section">Clients</a>
+      <a href="index.html#audit-trail">Audit trail</a>
+      <a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a>
+      <a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a>
+    </div>
+  </nav>
+  <section id="login-card" class="card login-card ops-login">
+    <div class="eyebrow">ASSET TOOLS</div><h2>Sign in to continue</h2>
+    <div id="google-signin-button"></div><button id="grant-access" class="primary hidden">Connect Google Sheets</button><p id="auth-status" class="status" aria-live="polite"></p>
+  </section>
+  <section id="tools-page" class="hidden">
+    <div class="toolbar card ops-toolbar-card asset-tools-toolbar">
+      <div><strong id="workbook-name">Assets Inventory Ledger</strong><div id="sync-status" class="muted">Waiting for connection</div></div>
+      <button id="refresh" class="secondary">Refresh</button>
+    </div>
+    <div class="asset-tools-grid">
+      <section class="card asset-tool-panel">
+        <div class="section-heading"><div><div class="eyebrow">WAREHOUSE</div><h2>Combine asset types</h2></div></div>
+        <form id="combine-form" class="asset-tool-form">
+          <label>Combination rule<select id="combine-rule" required><option value="">Select a rule</option></select></label>
+          <label>Batches to make<input id="combine-batches" type="number" min="1" step="1" value="1" required></label>
+          <div id="combine-preview" class="asset-tool-preview">Select a rule to preview component usage and output.</div>
+          <button class="primary" type="submit">Review and combine</button>
+          <p id="combine-status" class="status" aria-live="polite"></p>
+        </form>
+        <div class="rule-list-heading"><h3>Combination rules</h3><span id="rule-count" class="badge">0</span></div>
+        <div id="rules-list" class="asset-rules-list"></div>
+        <details class="add-rule-details">
+          <summary>+ Add a combination rule</summary>
+          <form id="rule-form" class="asset-tool-form rule-form">
+            <label>Rule name<input id="rule-name" type="text" maxlength="100" placeholder="e.g. Magnum assembly" required></label>
+            <label>Asset created<select id="rule-output-asset" required></select></label>
+            <label>Output quantity per batch<input id="rule-output-qty" type="number" min="1" step="1" value="1" required></label>
+            <div class="rule-components-header"><strong>Components required per batch</strong><button id="add-rule-component" class="secondary small-button" type="button">+ Component</button></div>
+            <div id="rule-components" class="rule-components"></div>
+            <button class="primary" type="submit">Save rule</button>
+            <p id="rule-status" class="status" aria-live="polite"></p>
+          </form>
+        </details>
+      </section>
+      <section class="card asset-tool-panel">
+        <div class="section-heading"><div><div class="eyebrow">CLIENT LEDGER</div><h2>Normalise client balance</h2></div></div>
+        <form id="normalise-form" class="asset-tool-form">
+          <label>Client<select id="normalise-client" required><option value="">Select client</option></select></label>
+          <label>Asset type<select id="normalise-asset" required><option value="">Select asset</option></select></label>
+          <div class="current-client-balance"><span>Current ledger balance</span><strong id="normalise-current-balance">—</strong></div>
+          <label>Correct balance<input id="normalise-target-balance" type="number" step="1" required placeholder="e.g. 25 or -5"></label>
+          <label>Reason for correction<textarea id="normalise-reason" rows="4" required minlength="5" maxlength="1000" placeholder="Explain why the ledger needs correcting."></textarea></label>
+          <p class="asset-tool-note">This creates an auditable client-ledger adjustment. Warehouse inventory is not changed.</p>
+          <button class="primary" type="submit">Review and normalise</button>
+          <p id="normalise-status" class="status" aria-live="polite"></p>
+        </form>
+        <div class="adjustment-history-heading"><h3>Recent normalisations</h3></div>
+        <div id="adjustment-history" class="adjustment-history"></div>
+      </section>
+    </div>
+    <section class="card asset-tool-panel asset-operations-panel">
+      <div class="section-heading"><div><div class="eyebrow">AUDIT TRAIL</div><h2>Recent asset combinations</h2></div></div>
+      <div id="operation-history" class="operation-history"></div>
+    </section>
+  </section>
+</main>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('fm-google-loaded'))"></script>
+<script src="config.js?v=shift-checklist-20261016-v1"></script>
+<script src="asset-tools.js?v=asset-tools-20261014-v1"></script>
+</body>
+</html>

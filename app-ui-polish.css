@@ -1,0 +1,1770 @@
+
+/*
+ * ASSET COMPLIANCE — PROJECT UI POLISH
+ * Shared visual system + responsive behavior.
+ * Loaded last so it provides one predictable final layer over page-specific CSS.
+ */
+
+:root {
+  --ui-bg: #f5f7fb;
+  --ui-surface: #ffffff;
+  --ui-surface-soft: #f8fafc;
+  --ui-text: #17202a;
+  --ui-muted: #667085;
+  --ui-muted-2: #8a94a5;
+  --ui-border: #dfe5ec;
+  --ui-border-strong: #c8d2df;
+  --ui-primary: #111827;
+  --ui-primary-hover: #202938;
+  --ui-focus: rgba(17, 24, 39, .14);
+  --ui-success: #1f8f4c;
+  --ui-danger: #b42318;
+  --ui-radius: 16px;
+  --ui-radius-sm: 11px;
+  --ui-shadow: 0 8px 28px rgba(15, 23, 42, .055);
+  --ui-shadow-strong: 0 14px 38px rgba(15, 23, 42, .09);
+}
+
+html {
+  min-width: 320px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 84px;
+}
+
+body {
+  background: var(--ui-bg) !important;
+  color: var(--ui-text) !important;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+input, select, textarea {
+  color: var(--ui-text);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-shell,
+.ops-page {
+  width: min(1360px, calc(100% - 40px));
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.app-shell {
+  padding: 30px 0 56px !important;
+}
+
+.ops-page {
+  padding: 0 0 48px !important;
+}
+
+.topbar {
+  gap: 24px !important;
+  margin-bottom: 18px !important;
+}
+
+.topbar > div:first-child,
+.topbar .account-area,
+.account-area > div {
+  min-width: 0;
+}
+
+.topbar h1 {
+  text-wrap: balance;
+}
+
+.topbar p {
+  max-width: 760px;
+  line-height: 1.4;
+}
+
+.account-area {
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}
+
+.account-area .user-email,
+.account-area .user-name {
+  overflow-wrap: anywhere;
+}
+
+.card,
+.movement-card,
+.warehouse-card,
+.clients-section,
+#audit-trail,
+.dashboard-filters,
+.toolbar,
+.location-banner,
+.ops-panel,
+.ops-toolbar-card,
+.ops-stat,
+.alert-card-grid,
+.alert-controls,
+.alert-card,
+.ops-note,
+.ops-modal-card,
+.transaction-card {
+  border-color: var(--ui-border) !important;
+  box-shadow: var(--ui-shadow) !important;
+}
+
+.card,
+.movement-card,
+.warehouse-card,
+.clients-section,
+#audit-trail,
+.dashboard-filters,
+.toolbar,
+.location-banner,
+.ops-panel,
+.ops-toolbar-card,
+.alert-card-grid,
+.alert-controls,
+.alert-card,
+.ops-note,
+.ops-stat,
+.transaction-card {
+  background: var(--ui-surface) !important;
+}
+
+.login-card {
+  width: min(620px, 100%);
+  margin: 36px auto 40px !important;
+  border-radius: 18px !important;
+}
+
+.login-card h2 {
+  text-wrap: balance;
+}
+
+.primary,
+.secondary,
+.table-action,
+.icon-button,
+.small-button,
+.transaction-card-view,
+.ops-form-actions button {
+  min-height: 40px;
+  border-radius: 10px;
+  transition: transform .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.primary,
+button.primary {
+  background: var(--ui-primary) !important;
+  border-color: var(--ui-primary) !important;
+  color: #fff !important;
+}
+
+.primary:hover,
+button.primary:hover {
+  background: var(--ui-primary-hover) !important;
+  border-color: var(--ui-primary-hover) !important;
+}
+
+button:not(:disabled):active,
+a:not([aria-disabled="true"]):active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  border-color: var(--ui-border-strong) !important;
+  background: var(--ui-surface) !important;
+  color: var(--ui-text) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #98a2b3;
+  opacity: 1;
+}
+
+/* Desktop navigation: show the real navigation, not a large dropdown trigger. */
+.quick-nav {
+  position: sticky;
+  top: 10px;
+  z-index: 40;
+  margin-bottom: 18px !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,.94) !important;
+  box-shadow: 0 6px 20px rgba(15,23,42,.055) !important;
+  backdrop-filter: blur(12px);
+  overflow: visible !important;
+}
+
+.quick-nav .menu-toggle {
+  display: none !important;
+}
+
+.quick-nav .menu-links {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+}
+
+.quick-nav .menu-links a {
+  min-height: 38px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 9px;
+  color: #596273 !important;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.quick-nav .menu-links a:hover,
+.quick-nav .menu-links a.active {
+  background: var(--ui-primary) !important;
+  color: #fff !important;
+}
+
+.nav-alert-badge {
+  margin-left: 4px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 2px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #344054;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.quick-nav .menu-links a.active .nav-alert-badge {
+  background: rgba(255,255,255,.16);
+  color: #fff;
+}
+
+.section-heading {
+  padding: 22px 24px !important;
+}
+
+.section-heading h2 {
+  text-wrap: balance;
+}
+
+.toolbar,
+.source-bar,
+.location-banner {
+  border-radius: var(--ui-radius) !important;
+}
+
+.toolbar,
+.source-bar {
+  gap: 14px !important;
+}
+
+.toolbar-actions,
+.source-bar .toolbar-actions {
+  flex-wrap: wrap;
+}
+
+.dashboard-filters,
+.toolbar,
+.location-banner,
+.source-bar {
+  min-width: 0;
+}
+
+.form-grid,
+.form-top,
+.movement-form,
+.ops-form,
+.client-ledger-export-form {
+  min-width: 0;
+}
+
+.form-grid > *,
+.form-top > *,
+.movement-form > *,
+.ops-form > *,
+.client-ledger-export-form > * {
+  min-width: 0;
+}
+
+.table-wrap,
+.ops-table-wrap,
+.transaction-summary-table,
+.manage-table-wrap,
+.investigate-table-wrap,
+.client-graph-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.table-wrap table,
+.ops-table,
+.transaction-summary-head,
+.transaction-total-row {
+  max-width: none;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+.confirm-photo-wrap img,
+#info-photo {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: min(62vh, 520px);
+  object-fit: contain;
+  border-radius: 12px;
+  background: #f4f6f8;
+}
+
+.graph-hover-tooltip {
+  max-width: min(320px, calc(100vw - 24px));
+}
+
+.ops-hero {
+  padding-top: 8px !important;
+}
+
+.ops-hero h1 {
+  text-wrap: balance;
+}
+
+.ops-form {
+  align-items: start;
+}
+
+.ops-form-actions {
+  flex-wrap: wrap;
+}
+
+.ops-table {
+  min-width: 760px;
+}
+
+.ops-modal {
+  padding: 18px;
+  overscroll-behavior: contain;
+}
+
+.ops-modal-card {
+  max-width: calc(100vw - 36px);
+}
+
+.alert-card {
+  min-width: 0;
+}
+
+.alert-card-title h3,
+.alert-card-message,
+.alert-message {
+  overflow-wrap: anywhere;
+}
+
+.transaction-card {
+  min-width: 0;
+}
+
+.transaction-card-head,
+.transaction-card-top {
+  min-width: 0;
+}
+
+.transaction-card-time {
+  max-width: 34%;
+  overflow-wrap: anywhere;
+}
+
+.transaction-asset-pill,
+.confirm-batch-assets > span {
+  min-width: 0;
+}
+
+.transaction-asset-pill span {
+  min-width: 0;
+}
+
+.movement-entry-card,
+.batch-assets-section,
+.attachment-section,
+.asset-section {
+  min-width: 0;
+}
+
+/* Keep data-dense desktop views readable without creating giant empty cards. */
+.warehouse-assets-grid {
+  align-content: start;
+}
+
+.client-cards {
+  align-content: start;
+}
+
+.warehouse-card,
+.clients-section,
+#audit-trail,
+.ops-panel {
+  overflow: clip;
+}
+
+@supports not (overflow: clip) {
+  .warehouse-card,
+  .clients-section,
+  #audit-trail,
+  .ops-panel {
+    overflow: hidden;
+  }
+}
+
+/* 1280-ish laptops */
+@media (max-width: 1100px) {
+  .app-shell,
+  .ops-page {
+    width: min(100%, calc(100% - 28px));
+  }
+
+  .quick-nav .menu-links a {
+    font-size: 11px;
+    padding-inline: 10px;
+  }
+}
+
+/* Tablet */
+@media (max-width: 760px) {
+  html {
+    scroll-padding-top: 74px;
+  }
+
+  body {
+    min-width: 320px;
+  }
+
+  .app-shell,
+  .ops-page {
+    width: 100% !important;
+    max-width: none;
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+  }
+
+  .app-shell {
+    padding-top: max(14px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(30px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .ops-page {
+    padding-bottom: max(30px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .topbar {
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .topbar h1 {
+    font-size: clamp(34px, 11vw, 50px) !important;
+    line-height: .98;
+    letter-spacing: -.05em;
+  }
+
+  .topbar p {
+    font-size: 14px !important;
+    line-height: 1.4;
+  }
+
+  .account-area {
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+    padding: 8px 10px !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: 14px !important;
+    background: var(--ui-surface) !important;
+  }
+
+  .account-area .secondary {
+    min-height: 42px;
+    margin-left: auto;
+  }
+
+  .quick-nav {
+    top: max(6px, env(safe-area-inset-top));
+    margin-bottom: 12px !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  .quick-nav .menu-toggle {
+    display: flex !important;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 13px;
+    align-items: center;
+    gap: 9px;
+    border: 0;
+    background: transparent !important;
+    color: #344054 !important;
+    text-align: left;
+  }
+
+  .quick-nav .menu-toggle-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .quick-nav .menu-toggle-chevron {
+    margin-left: auto;
+    transition: transform .18s ease;
+  }
+
+  .quick-nav.menu-open .menu-toggle-chevron {
+    transform: rotate(180deg);
+  }
+
+  .quick-nav .menu-links {
+    display: none !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    padding: 8px;
+    border-top: 1px solid var(--ui-border);
+  }
+
+  .quick-nav.menu-open .menu-links {
+    display: grid !important;
+  }
+
+  .quick-nav .menu-links a {
+    min-height: 44px;
+    width: 100%;
+    padding: 8px 9px;
+    border-radius: 10px;
+    white-space: normal;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .card,
+  .movement-card,
+  .warehouse-card,
+  .clients-section,
+  #audit-trail,
+  .dashboard-filters,
+  .toolbar,
+  .location-banner,
+  .ops-panel,
+  .ops-stat,
+  .alert-card,
+  .transaction-card {
+    border-radius: 15px !important;
+  }
+
+  .login-card {
+    max-width: none;
+    margin: 22px 0 30px !important;
+    padding: 24px 20px !important;
+  }
+
+  .login-card h2 {
+    font-size: 25px !important;
+  }
+
+  .section-heading {
+    padding: 17px 15px !important;
+    gap: 10px;
+  }
+
+  .section-heading h2 {
+    font-size: 21px !important;
+  }
+
+  .section-heading p {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .toolbar,
+  .source-bar,
+  .location-banner {
+    align-items: stretch !important;
+    padding: 14px !important;
+  }
+
+  .toolbar-actions,
+  .source-bar .toolbar-actions,
+  .toolbar .toolbar-actions,
+  .source-bar > .toolbar-actions,
+  .source-bar > button {
+    width: 100%;
+  }
+
+  .toolbar-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+  }
+
+  .toolbar-actions button,
+  .source-bar .toolbar-actions button {
+    width: 100%;
+  }
+
+  .form-grid,
+  .ops-form,
+  .client-ledger-export-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ops-form .wide {
+    grid-column: auto !important;
+  }
+
+  .ops-form-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .ops-form-actions button {
+    width: 100%;
+  }
+
+  .ops-hero {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 4px;
+    padding-top: 4px !important;
+  }
+
+  .ops-hero h1 {
+    font-size: clamp(34px, 10vw, 46px);
+    line-height: 1;
+  }
+
+  .ops-form {
+    gap: 12px;
+    padding: 0 16px 18px !important;
+  }
+
+  .ops-table-wrap,
+  .manage-table-wrap,
+  .investigate-table-wrap {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .ops-table {
+    min-width: 720px;
+  }
+
+  .ops-modal {
+    padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .ops-modal-card {
+    width: min(100%, 680px);
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    border-radius: 16px;
+    padding: 16px !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ops-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .ops-modal-actions button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .alert-controls {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    padding: 14px !important;
+  }
+
+  .alert-filter-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .alert-filter {
+    min-height: 42px;
+    width: 100%;
+  }
+
+  .alert-search input {
+    min-height: 46px;
+    font-size: 16px !important;
+  }
+
+  .alert-card-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    padding-inline: 14px !important;
+  }
+
+  .alert-card {
+    padding: 15px;
+  }
+
+  .alert-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .alert-card-actions .small-button {
+    width: 100%;
+  }
+
+  .alert-card-actions .small-button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ops-stats,
+  .alert-stats {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px;
+  }
+
+  .ops-stat {
+    padding: 12px;
+  }
+
+  .ops-stat strong {
+    font-size: 22px;
+  }
+
+  .client-cards,
+  .warehouse-assets-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .client-cards {
+    gap: 10px;
+    padding-inline: 14px !important;
+  }
+
+  .warehouse-assets-grid {
+    gap: 10px;
+    padding-inline: 14px;
+  }
+
+  .warehouse-asset-card {
+    min-width: 0;
+    padding: 12px !important;
+  }
+
+  .warehouse-asset-count {
+    font-size: 30px !important;
+  }
+
+  .warehouse-asset-name,
+  .client-asset-name {
+    overflow-wrap: anywhere;
+  }
+
+  .client-asset-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .detail-summary {
+    grid-template-columns: 1fr 1fr !important;
+    padding: 14px !important;
+  }
+
+  .detail-summary > * {
+    min-width: 0;
+  }
+
+  .audit-filters,
+  .client-details-filters {
+    grid-template-columns: 1fr 1fr !important;
+    padding: 12px 14px 14px !important;
+    gap: 8px;
+  }
+
+  .audit-filters label:first-child,
+  .audit-filters button,
+  .client-details-filters button {
+    grid-column: 1 / -1;
+  }
+
+  .audit-filters input,
+  .audit-filters select,
+  .client-details-filters input,
+  .client-details-filters select {
+    min-width: 0 !important;
+    width: 100%;
+    min-height: 46px;
+    font-size: 16px !important;
+  }
+
+  .photo-input-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .photo-input-row input[type=file] {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .photo-input-row button {
+    width: 100%;
+  }
+
+  .submit-button,
+  #submit-movement,
+  #record-movements {
+    width: 100%;
+    min-height: 50px;
+  }
+
+  .movement-form,
+  .movement-form-multi {
+    padding: 15px !important;
+  }
+
+  .movement-form input,
+  .movement-form select,
+  .movement-form textarea,
+  .movement-form-multi input,
+  .movement-form-multi select,
+  .movement-form-multi textarea,
+  .ops-form input,
+  .ops-form select,
+  .ops-form textarea {
+    min-height: 48px;
+    font-size: 16px !important;
+  }
+
+  .movement-form textarea,
+  .movement-form-multi textarea,
+  .ops-form textarea {
+    min-height: 96px;
+  }
+
+  .asset-row {
+    grid-template-columns: minmax(0, 1fr) minmax(96px, .72fr) !important;
+    gap: 9px;
+  }
+
+  .asset-row-number {
+    grid-column: 1 / -1;
+    min-height: 30px;
+  }
+
+  .asset-row .remove-asset {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .batch-entry-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  .batch-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-header-row .secondary {
+    width: 100%;
+  }
+
+  .batch-asset-row {
+    grid-template-columns: 26px minmax(0, 1fr) minmax(86px, .7fr) !important;
+  }
+
+  .batch-remove-asset {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .transaction-card-list {
+    padding-inline: 12px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .transaction-card-head {
+    padding: 12px 12px 10px 14px !important;
+  }
+
+  .transaction-truck-icon {
+    width: 38px !important;
+    height: 38px !important;
+    flex-basis: 38px !important;
+  }
+
+  .transaction-card-client-copy h3,
+  .transaction-card-heading .transaction-card-client {
+    font-size: 15px !important;
+  }
+
+  .transaction-card-time {
+    max-width: 92px;
+    font-size: 10px;
+    white-space: normal !important;
+    text-align: right;
+  }
+
+  .transaction-movement-section {
+    margin-left: 14px;
+    margin-right: 10px;
+  }
+
+  .transaction-asset-list {
+    grid-template-columns: 1fr !important;
+  }
+
+  .transaction-card-footer {
+    padding-left: 14px;
+    padding-right: 12px;
+  }
+
+  .transaction-card-footer button {
+    min-height: 40px;
+  }
+
+  .transaction-summary {
+    margin-inline: 14px !important;
+  }
+
+  .transaction-summary-table {
+    max-width: 100%;
+  }
+
+  .transaction-summary-head,
+  .transaction-total-row {
+    min-width: 620px;
+  }
+
+  .client-ledger-export-card {
+    width: min(100% - 14px, 720px) !important;
+    max-width: none;
+    border-radius: 16px !important;
+    padding: 16px !important;
+  }
+
+  .client-ledger-export-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.35fr;
+    gap: 8px;
+  }
+
+  .client-ledger-export-actions button {
+    width: 100%;
+  }
+
+  .info-card {
+    width: min(calc(100% - 16px), 620px) !important;
+    max-width: none;
+    max-height: calc(100dvh - 16px);
+    margin: 8px auto;
+    border-radius: 16px !important;
+  }
+
+  .info-card .confirmation-grid,
+  .info-card .modal-header {
+    padding-inline: 16px;
+  }
+
+  .confirm-actions {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .confirm-actions button {
+    width: 100%;
+  }
+
+  .graph-hover-tooltip {
+    max-width: min(240px, calc(100vw - 24px));
+  }
+
+  /* Prevent long client/asset labels from expanding grids. */
+  .client-card,
+  .client-card-top,
+  .client-card-footer,
+  .warehouse-asset-name-row {
+    min-width: 0;
+  }
+
+  .client-card-top > *,
+  .client-card-footer > * {
+    min-width: 0;
+  }
+}
+
+/* Small phones */
+@media (max-width: 390px) {
+  .app-shell,
+  .ops-page {
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
+  }
+
+  .topbar h1 {
+    font-size: clamp(32px, 10.7vw, 42px) !important;
+  }
+
+  .topbar p {
+    font-size: 13px !important;
+  }
+
+  .quick-nav .menu-links {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .client-cards,
+  .warehouse-assets-grid,
+  .ops-stats,
+  .alert-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .detail-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .audit-filters,
+  .client-details-filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .audit-filters label:first-child,
+  .audit-filters button,
+  .client-details-filters button {
+    grid-column: auto;
+  }
+
+  .alert-filter-tabs {
+    grid-template-columns: 1fr !important;
+  }
+
+  .alert-card-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-card-actions .small-button:first-child {
+    grid-column: auto;
+  }
+
+  .transaction-card-time {
+    max-width: 80px;
+  }
+
+  .batch-asset-row {
+    grid-template-columns: minmax(0, 1fr) minmax(88px, .7fr) !important;
+  }
+
+  .batch-asset-number {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* =========================================================
+   Mobile v2 — compact filters + cleaner movement logger
+   Loaded last so these rules intentionally win over older
+   responsive layers without changing existing JS hooks.
+   ========================================================= */
+
+@media (max-width: 760px) {
+  /* Compact native date controls. Keep the native picker, but remove the
+     excessive 46–48px vertical bulk used by the generic form rule. */
+  input[type="date"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 8px 10px !important;
+    font-size: 15px !important;
+    line-height: 1.2 !important;
+    border-radius: 10px !important;
+  }
+
+  .dashboard-filter-grid input[type="date"],
+  .audit-filters input[type="date"],
+  .client-details-filters input[type="date"],
+  .investigate-filters input[type="date"],
+  .client-ledger-export-form input[type="date"] {
+    height: 42px !important;
+    min-height: 42px !important;
+  }
+
+  /* The logger should read as a simple mobile workflow, not a desktop form
+     squeezed into a phone. */
+  #logger {
+    display: block;
+    min-width: 0;
+  }
+
+  #logger .source-bar {
+    margin-bottom: 10px;
+    padding: 11px 12px !important;
+    border-radius: 13px !important;
+  }
+
+  #logger .source-bar .secondary {
+    width: auto;
+    min-width: 84px;
+    min-height: 40px;
+    align-self: center;
+  }
+
+  #logger .movement-card,
+  #logger .audit-card {
+    border-radius: 14px !important;
+  }
+
+  #logger .movement-card .section-heading {
+    padding: 15px 14px !important;
+    align-items: center;
+  }
+
+  #logger .movement-card .section-heading h2 {
+    font-size: 20px !important;
+  }
+
+  #logger .movement-card .section-heading p {
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
+  #logger .today-pill {
+    flex: 0 0 auto;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  #movement-form.movement-form-multi {
+    display: block;
+    padding: 12px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  #movement-form .client-movement-batch {
+    gap: 9px;
+  }
+
+  #movement-form .batch-header-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    padding: 0 1px 3px;
+  }
+
+  #movement-form .batch-header-row h3 {
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  #movement-form .batch-header-row p {
+    display: none;
+  }
+
+  #movement-form .batch-header-row .secondary {
+    width: auto;
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  #movement-form .client-movement-entries {
+    gap: 9px;
+  }
+
+  #movement-form .movement-entry-card {
+    padding: 11px;
+    border-radius: 13px;
+    background: #fff;
+    border-color: #e2e7ee;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .045);
+  }
+
+  #movement-form .movement-entry-card.mode-received {
+    border-color: #bfdfca;
+    background: #fff;
+  }
+
+  #movement-form .movement-entry-card.mode-sent {
+    border-color: #c9d8ee;
+    background: #fff;
+  }
+
+  #movement-form .movement-entry-card.mode-discard {
+    border-color: #ecc8c1;
+    background: #fff;
+  }
+
+  #movement-form .movement-entry-head {
+    margin-bottom: 9px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  #movement-form .movement-entry-head h3 {
+    font-size: 13px;
+  }
+
+  #movement-form .movement-entry-number {
+    font-size: 9px;
+    letter-spacing: .12em;
+  }
+
+  #movement-form .batch-remove-client {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  #movement-form .batch-entry-fields {
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) !important;
+    gap: 8px;
+  }
+
+  #movement-form .batch-entry-fields > label,
+  #movement-form .batch-asset-row label {
+    min-width: 0;
+    gap: 5px;
+    font-size: 9px;
+  }
+
+  #movement-form .batch-entry-fields select,
+  #movement-form .batch-asset-row select,
+  #movement-form .batch-asset-row input {
+    min-width: 0;
+    min-height: 44px;
+    height: 44px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 16px !important;
+  }
+
+  #movement-form .batch-client-help {
+    min-height: 0;
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  #movement-form .batch-mode-strip {
+    min-height: 36px;
+    margin: 8px 0;
+    padding: 8px 10px;
+    border-width: 1px;
+    border-radius: 9px;
+    font-size: 9px;
+    letter-spacing: .045em;
+    box-shadow: none !important;
+  }
+
+  #movement-form .movement-mode-strip::before {
+    width: 7px;
+    height: 7px;
+    box-shadow: none !important;
+  }
+
+  #movement-form .batch-assets-section {
+    padding: 9px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border-color: #e6ebf1;
+  }
+
+  #movement-form .batch-assets-head {
+    margin-bottom: 8px;
+  }
+
+  #movement-form .batch-assets-head h4 {
+    font-size: 12px;
+  }
+
+  #movement-form .batch-assets-head .eyebrow {
+    font-size: 8px;
+  }
+
+  #movement-form .batch-assets-head .secondary {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+
+  #movement-form .batch-asset-rows {
+    gap: 7px;
+  }
+
+  /* Keep the row number as a compact gutter even on very small phones. */
+  #movement-form .batch-asset-row {
+    grid-template-columns: 24px minmax(0, 1fr) minmax(78px, .62fr) !important;
+    gap: 7px;
+    padding: 0;
+  }
+
+  #movement-form .batch-asset-number {
+    height: 44px;
+    border-radius: 8px;
+    background: #eef2f6;
+    font-size: 9px;
+  }
+
+  #movement-form .batch-remove-asset {
+    grid-column: 2 / -1;
+    width: 100%;
+    min-height: 34px;
+    height: 34px;
+    padding: 5px 8px;
+    border-radius: 8px;
+    font-size: 9px;
+  }
+
+  #movement-form .movement-preview {
+    margin-top: 10px;
+    padding: 10px 11px;
+    border-radius: 10px;
+  }
+
+  #movement-form .movement-preview strong {
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  #movement-form .submit-button {
+    min-height: 48px;
+    margin-top: 10px;
+    border-radius: 11px;
+    font-size: 13px;
+  }
+
+  #movement-form .attachment-section {
+    margin-top: 10px;
+    padding: 10px !important;
+    gap: 10px;
+    border-radius: 11px;
+  }
+
+  #movement-form .photo-input-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+
+  #movement-form .photo-input-row input[type="file"] {
+    min-height: 42px;
+    height: 42px;
+    padding: 8px;
+    font-size: 13px !important;
+    border-radius: 9px;
+  }
+
+  #movement-form .photo-input-row button {
+    min-height: 40px;
+  }
+
+  #movement-form .comment-field textarea {
+    min-height: 82px;
+    font-size: 16px !important;
+  }
+
+  /* Compact audit filters: Client gets the full row; Day + Asset sit side-by-side. */
+  #logger .audit-filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px;
+    padding: 10px 12px 12px !important;
+  }
+
+  #logger .audit-filters label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  #logger .audit-filters label {
+    min-width: 0;
+    gap: 5px;
+    font-size: 9px;
+  }
+
+  #logger .audit-filters select,
+  #logger .audit-filters input:not([type="date"]) {
+    min-height: 42px;
+    height: 42px;
+    padding: 8px 9px;
+    font-size: 15px !important;
+  }
+
+  #logger .audit-filters input[type="date"] {
+    min-height: 42px !important;
+    height: 42px !important;
+    font-size: 14px !important;
+  }
+
+  #logger #clear-filters {
+    grid-column: 1 / -1;
+    min-height: 40px;
+    height: 40px;
+    font-size: 11px;
+  }
+
+  #logger .transaction-card-list {
+    padding-inline: 10px !important;
+    padding-bottom: 11px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  #movement-form .batch-entry-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  #movement-form .batch-asset-row {
+    grid-template-columns: 22px minmax(0, 1fr) minmax(72px, .6fr) !important;
+  }
+
+  #movement-form .batch-remove-asset {
+    grid-column: 2 / -1;
+  }
+
+  #logger .audit-filters {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Final mobile stability pass for generated asset rows + audit filters. */
+@media (max-width: 760px) {
+  #movement-form .batch-asset-row {
+    grid-template-columns: 24px minmax(0, 1fr) minmax(78px, .62fr) !important;
+    grid-template-rows: auto auto;
+    align-items: center;
+  }
+
+  #movement-form .batch-asset-number {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  #movement-form .batch-asset-row > label:nth-of-type(1) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  #movement-form .batch-asset-row > label:nth-of-type(2) {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+  }
+
+  #movement-form .batch-remove-asset {
+    grid-column: 2 / -1 !important;
+    grid-row: 2 !important;
+  }
+
+  /* At phone widths, a single clean filter column is easier to scan and
+     eliminates any possibility of native date controls squeezing a grid. */
+  #logger .audit-filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  #logger .audit-filters label:first-child,
+  #logger #clear-filters {
+    grid-column: auto !important;
+  }
+}
+
+@media (max-width: 390px) {
+  #movement-form .batch-asset-row {
+    grid-template-columns: 22px minmax(0, 1fr) minmax(72px, .60fr) !important;
+  }
+}
+
+/* Mobile asset rows: use a simple flex layout so the controls remain stable
+   on Safari/Chrome at 320px and do not inherit the desktop grid geometry. */
+@media (max-width: 760px) {
+  #movement-form .batch-asset-row {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 7px;
+    padding: 0;
+  }
+
+  #movement-form .batch-asset-number {
+    flex: 0 0 24px;
+    width: 24px;
+    height: 44px;
+    order: 1;
+    grid-area: auto !important;
+  }
+
+  #movement-form .batch-asset-row > label:nth-of-type(1) {
+    flex: 1 1 0;
+    min-width: 0;
+    order: 2;
+    grid-area: auto !important;
+  }
+
+  #movement-form .batch-asset-row > label:nth-of-type(2) {
+    flex: 0 0 78px;
+    min-width: 72px;
+    order: 3;
+    grid-area: auto !important;
+  }
+
+  #movement-form .batch-asset-row > label {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0;
+    gap: 5px;
+  }
+
+  #movement-form .batch-asset-row > label > span {
+    display: block;
+    min-height: 11px;
+  }
+
+  #movement-form .batch-remove-asset {
+    flex: 1 1 100%;
+    width: auto;
+    min-width: 0;
+    margin-left: 31px;
+    order: 4;
+    grid-area: auto !important;
+  }
+}
+
+@media (max-width: 390px) {
+  #movement-form .batch-header-row {
+    grid-template-columns: 1fr;
+  }
+
+  #movement-form .batch-header-row .secondary {
+    width: 100%;
+  }
+
+  #movement-form .batch-asset-number {
+    flex-basis: 22px;
+    width: 22px;
+  }
+
+  #movement-form .batch-asset-row > label:nth-of-type(2) {
+    flex-basis: 72px;
+    min-width: 68px;
+  }
+
+  #movement-form .batch-remove-asset {
+    margin-left: 29px;
+  }
+}
+
+/* Keep the primary batch controls vertically stacked on all phones.
+   This avoids cramped two-column headers on 320–390px screens. */
+@media (max-width: 760px) {
+  #movement-form .batch-header-row {
+    grid-template-columns: 1fr;
+  }
+
+  #movement-form .batch-header-row .secondary {
+    width: 100%;
+  }
+
+  #movement-form .batch-entry-fields {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* FINAL MOBILE CLIENT TILE WIDTH FIX */
+@media (max-width: 760px) {
+  .client-cards {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    padding-inline: 12px !important;
+  }
+  .client-card {
+    width: 100%;
+    min-width: 0;
+  }
+  .client-card-top,
+  .client-card-stats,
+  .client-card-assets,
+  .client-card-footer {
+    min-width: 0;
+  }
+}
+
+/* Project-wide signed-in greeting. Keep account chrome compact; the full email is not shown beside Sign out. */
+.account-area .user-email {
+  display: none !important;
+}
+.account-area .user-name {
+  font-size: 13px !important;
+  line-height: 1.25 !important;
+  font-weight: 800 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 760px) {
+  .account-area .user-name {
+    font-size: 14px !important;
+  }
+}
+
+/* Logger audit detail actions need a reliable tap target without widening the card. */
+#logger .transaction-card-view {
+  flex: 0 0 auto;
+  min-height: 40px;
+  white-space: nowrap;
+}
+#logger .transaction-detail-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: baseline;
+  margin-bottom: 12px;
+  color: var(--text, #344054);
+}
+@media (max-width: 760px) {
+  #logger .transaction-card-top {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  #logger .transaction-card-heading {
+    min-width: 0;
+    flex: 1 1 180px;
+  }
+  #logger .transaction-card-view {
+    width: 100%;
+    margin-top: 4px;
+  }
+  #logger .info-card {
+    width: min(100% - 18px, 560px) !important;
+    max-height: min(88vh, 720px);
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* Global dashboard search: looks across movement comments, registrations, clients,
+   assets, routine expectations and alerts without changing the active filters. */
+.global-search-panel{margin:18px 0 20px!important;padding:20px!important;border:1px solid var(--ui-border)!important;background:linear-gradient(180deg,#fff,#fbfcfe)!important}
+.global-search-heading h2{margin:4px 0 5px!important;font-size:20px!important}
+.global-search-heading p{margin:0!important;font-size:12px;line-height:1.5}
+.global-search-control{display:flex;align-items:center;gap:10px;margin-top:14px;min-width:0}
+.global-search-control input{flex:1;min-width:0;min-height:48px;border:1px solid var(--ui-border-strong);border-radius:12px;background:#fff;padding:12px 14px;font-size:14px;box-shadow:0 1px 2px rgba(16,24,40,.025)}
+.global-search-icon{display:none}
+.global-search-results{margin-top:16px;border-top:1px solid #edf0f4;padding-top:15px}
+.global-search-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;color:#667085;font-size:12px}
+.global-search-summary strong{color:#17202a;font-size:13px}
+.global-search-group{margin-top:16px}
+.global-search-group-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 10px}
+.global-search-group-heading h3{margin:0;font-size:14px;color:#263244}
+.global-search-group-heading>span{font-size:11px;color:#667085;white-space:nowrap}
+.global-search-transactions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.global-search-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.global-search-tile,.global-search-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding:13px 14px;border:1px solid #e3e8ef;border-radius:12px;background:#fff;color:#17202a;text-align:left}
+button.global-search-tile{width:100%;cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease}
+button.global-search-tile:hover{border-color:#aeb8c6;box-shadow:0 3px 12px rgba(15,23,42,.06)}
+.global-search-tile strong,.global-search-item strong{font-size:13px;overflow-wrap:anywhere}
+.global-search-tile>span:last-child,.global-search-item>span:last-child{font-size:11px;color:#667085;line-height:1.45;overflow-wrap:anywhere}
+.global-search-tile .eyebrow,.global-search-item .eyebrow{font-size:9px;letter-spacing:.08em;color:#8a94a5}
+.global-search-more,.global-search-empty{margin:10px 0 0;padding:14px;border-radius:11px;background:#f8fafc;color:#667085;font-size:12px;line-height:1.5}
+.global-search-empty{display:flex;flex-direction:column;gap:5px}
+.global-search-empty strong{color:#344054;font-size:13px}
+.global-search-empty span{overflow-wrap:anywhere}
+@media(max-width:760px){
+  .global-search-panel{padding:15px!important;margin:13px 0 16px!important;border-radius:14px!important}
+  .global-search-control{gap:7px;align-items:stretch}
+  .global-search-control input{min-height:48px;padding:11px 12px;font-size:13px}
+  .global-search-control button{min-height:44px;padding:9px 11px}
+  .global-search-transactions{grid-template-columns:1fr;gap:9px}
+  .global-search-tiles{grid-template-columns:1fr;gap:8px}
+  .global-search-tile,.global-search-item{padding:12px}
+  .global-search-group-heading h3{font-size:13px}
+}

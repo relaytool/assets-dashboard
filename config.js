@@ -6,20 +6,17 @@ const CONFIG = {
     GOOGLE_CLIENT_ID: "50542963972-75ictdqcblqigj1iq30pobdqk06s1v93.apps.googleusercontent.com",
 
     /*
-     * Main collection tracker workbook (read-only).
-     * Looked up by name in the signed-in user's Drive: the app tries
-     * PRIMARY_WORKBOOK_NAME first, and only falls back to
-     * FALLBACK_WORKBOOK_NAME if that isn't found. Only MAIN_SHEET_NAME
-     * is ever read from this workbook — nothing is ever written to it.
+     * The Assets Inventory Ledger is the only operational workbook used by
+     * the dashboard. Routine movements and persistent alerts live here too.
      */
-    PRIMARY_WORKBOOK_NAME:
-        "FM daily Tracker",
+    ROUTINE_SHEET_NAME:
+        "Routine Outbounds",
 
-    FALLBACK_WORKBOOK_NAME:
-        "Copy of FM daily Tracker",
+    ALERTS_SHEET_NAME:
+        "Alerts",
 
-    MAIN_SHEET_NAME:
-        "FM collection tracker",
+    SHIFT_CHECKLIST_SHEET_NAME:
+        "Shift Checklist",
 
     /*
      * Assets Inventory Ledger - dedicated spreadsheet (opened directly by
@@ -39,8 +36,16 @@ const CONFIG = {
     TRANSACTIONS_SHEET_NAME:
         "Asset Transactions",
 
+    // Optional extension sheets. Older dashboard versions can safely ignore these.
+    ASSET_AVAILABILITY_SHEET_NAME: "Asset Availability",
+    ASSET_OPERATIONS_SHEET_NAME: "Asset Operations",
+    CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME: "Client Ledger Adjustments",
+    ASSET_COMBINATION_RULES_SHEET_NAME: "Asset Combination Rules",
+
     CLIENT_LIST_SHEET_NAME:
         "Client List",
+
+    CLIENT_TYPES_SHEET_NAME: "Client Types",
 
     LOCATION:
         "UB11",
@@ -63,6 +68,15 @@ const CONFIG = {
      */
     DRIVE_PHOTOS_PARENT_FOLDER_ID:
         "15NJveQRQ0WHR5FuR0E967dGs5bOBaPoH",
+
+    // Root Drive folder for client-specific report-photo archives. Each client gets
+    // its own uppercase folder (for example, SHEIN MOVEMENTS) beneath this folder.
+    DRIVE_CLIENT_LEDGER_PHOTOS_PARENT_FOLDER_ID:
+        "1hs6fIiuxvqmj7VL4dsqowu6EANgauoik",
+
+    // Kept as a legacy setting for compatibility with older report exports.
+    DRIVE_LEDGER_EXPORT_PHOTOS_FOLDER_NAME:
+        "Client Ledger Export Photos",
 
     /*
      * NOTE: broadened from "drive.readonly" to full "drive" so the app can
@@ -93,3 +107,230 @@ window.formatTimestamp = window.formatTimestamp || function(value){
             minute:"2-digit"
         });
 };
+
+
+/* Shared Google auth cache. Keeps a short-lived access token across page changes/refreshes
+   so the user normally does not have to reconnect Sheets on every page. */
+window.FM_AUTH_CACHE = window.FM_AUTH_CACHE || (() => {
+    const KEY = "fmAssetAccessToken";
+    const SKEW_MS = 45 * 1000;
+    function read(expectedEmail){
+        try{
+            const value = JSON.parse(localStorage.getItem(KEY) || "null");
+            if(expectedEmail && value?.email && String(value.email).toLowerCase() !== String(expectedEmail).toLowerCase()){
+                localStorage.removeItem(KEY);
+                return null;
+            }
+            if(!value?.token || Number(value.expiresAt || 0) <= Date.now() + SKEW_MS){
+                localStorage.removeItem(KEY);
+                return null;
+            }
+            return value;
+        }catch(_){
+            localStorage.removeItem(KEY);
+            return null;
+        }
+    }
+    function write(token, expiresIn, email){
+        try{
+            localStorage.setItem(KEY, JSON.stringify({
+                token,
+                expiresAt: Date.now() + Math.max(60, Number(expiresIn || 3600)) * 1000,
+                email: email || ""
+            }));
+        }catch(_){}
+    }
+    function clear(){ try{ localStorage.removeItem(KEY); }catch(_){} }
+    return {read,write,clear};
+})();
+
+/* Shared connection/loading UI. Pages use the same helper so Sheets connection
+   feedback behaves consistently on desktop, Android Chrome and iOS/iPadOS Safari PWAs. */
+window.FM_CONNECTION_UI = window.FM_CONNECTION_UI || (() => {
+    function overlay(){ return document.getElementById("connection-loading"); }
+    function title(){ return document.getElementById("connection-loading-title"); }
+    function detail(){ return document.getElementById("connection-loading-detail"); }
+    function show(message="Connecting to Google Sheets…", sub="Checking your saved Google connection."){
+        const node=overlay();
+        if(!node) return;
+        if(title()) title().textContent=message;
+        if(detail()) detail().textContent=sub;
+        node.classList.remove("hidden");
+        node.setAttribute("aria-hidden","false");
+        document.documentElement.classList.add("fm-connection-active");
+    }
+    function hide(){
+        const node=overlay();
+        if(node){ node.classList.add("hidden"); node.setAttribute("aria-hidden","true"); }
+        document.documentElement.classList.remove("fm-connection-active");
+    }
+    function text(message,sub){ if(title()) title().textContent=message||"Connecting to Google Sheets…"; if(detail()) detail().textContent=sub||""; }
+    return {show,hide,text};
+})();
+
+window.addEventListener("pageshow", () => {
+    document.documentElement.classList.remove("fm-connection-active");
+});
+
+/* Shared media helpers used by the dashboard, movement logger and alerts. */
+window.FM_MEDIA = window.FM_MEDIA || (() => {
+    const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
+
+    function driveFileIdFromLink(url){
+        const text = String(url || "");
+        const m = text.match(/\/d\/([a-zA-Z0-9_-]+)/) || text.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        return m ? m[1] : "";
+    }
+
+    function revokeObjectUrl(img){
+        const previous = img?.dataset?.fmObjectUrl;
+        if(previous){
+            try { URL.revokeObjectURL(previous); } catch (_) {}
+            delete img.dataset.fmObjectUrl;
+        }
+    }
+
+    async function loadDriveImage(img, url, accessToken){
+        if(!img) return;
+        revokeObjectUrl(img);
+        if(!url){
+            img.removeAttribute("src");
+            img.dataset.fmImageState = "empty";
+            return false;
+        }
+        const fileId = driveFileIdFromLink(url);
+        if(!fileId || !accessToken){
+            img.src = url;
+            img.dataset.fmImageState = "direct";
+            return true;
+        }
+
+        img.dataset.fmImageState = "loading";
+        try{
+            const response = await fetch(`${DRIVE_API}/${encodeURIComponent(fileId)}?alt=media`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+                cache: "force-cache"
+            });
+            if(!response.ok) throw new Error(`Drive image request failed (${response.status})`);
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            img.dataset.fmObjectUrl = objectUrl;
+            img.src = objectUrl;
+            img.dataset.fmImageState = "loaded";
+            return true;
+        }catch(error){
+            console.warn("Authenticated Drive image load failed:", error);
+            try{
+                const fallback = await fetch(`https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1200`, {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                    cache: "force-cache"
+                });
+                if(fallback.ok){
+                    const blob = await fallback.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+                    img.dataset.fmObjectUrl = objectUrl;
+                    img.src = objectUrl;
+                    img.dataset.fmImageState = "thumbnail";
+                    return true;
+                }
+            }catch(_){ /* fall through to Drive link */ }
+            img.src = url;
+            img.dataset.fmImageState = "fallback";
+            return false;
+        }
+    }
+
+    async function optimizeImageForUpload(file, { maxDimension = 1800, quality = 0.82 } = {}){
+        if(!file || !String(file.type || "").startsWith("image/")) return file;
+        try{
+            const objectUrl = URL.createObjectURL(file);
+            try{
+                const image = new Image();
+                image.decoding = "async";
+                image.src = objectUrl;
+                await new Promise((resolve, reject) => {
+                    image.onload = resolve;
+                    image.onerror = reject;
+                });
+                const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+                const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+                const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d", { alpha: false });
+                if(!ctx) return file;
+                ctx.drawImage(image, 0, 0, width, height);
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
+                if(!blob || blob.size >= file.size * 0.92) return file;
+                const base = String(file.name || "movement").replace(/\.[^.]+$/, "");
+                return new File([blob], `${base}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+            } finally {
+                URL.revokeObjectURL(objectUrl);
+            }
+        }catch(error){
+            console.warn("Image optimisation skipped:", error);
+            return file;
+        }
+    }
+
+    async function loadImageDataUrl(url, accessToken){
+        const source = String(url || "").trim();
+        if(!source) return null;
+        const fileId = driveFileIdFromLink(source);
+        const candidates = [];
+        if(fileId && accessToken){
+            candidates.push(`${DRIVE_API}/${encodeURIComponent(fileId)}?alt=media`);
+            candidates.push(`https://drive.google.com/thumbnail?id=${encodeURIComponent(fileId)}&sz=w1600`);
+        }
+        candidates.push(source);
+
+        for(const candidate of candidates){
+            try{
+                const isGoogleCandidate = candidate !== source && Boolean(fileId && accessToken);
+                const response = await fetch(candidate, {
+                    headers: isGoogleCandidate ? { Authorization: `Bearer ${accessToken}` } : {},
+                    cache: "force-cache"
+                });
+                if(!response.ok) continue;
+                let blob = await response.blob();
+                let type = String(blob.type || "").toLowerCase();
+                if(!["image/jpeg","image/png","image/gif"].includes(type)){
+                    try{
+                        const objectUrl = URL.createObjectURL(blob);
+                        try{
+                            const image = new Image();
+                            image.decoding = "async";
+                            image.src = objectUrl;
+                            await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+                            const scale = Math.min(1, 1600 / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+                            const canvas = document.createElement("canvas");
+                            canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+                            canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+                            const ctx = canvas.getContext("2d", {alpha:false});
+                            if(!ctx) continue;
+                            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                            const converted = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.9));
+                            if(!converted) continue;
+                            blob = converted;
+                            type = "image/jpeg";
+                        } finally { URL.revokeObjectURL(objectUrl); }
+                    }catch(_){ continue; }
+                }
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(String(reader.result || ""));
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+                const extension = type.includes("png") ? "png" : type.includes("gif") ? "gif" : "jpeg";
+                return {dataUrl, extension};
+            }catch(error){
+                console.warn("Spreadsheet image load failed:", error);
+            }
+        }
+        return null;
+    }
+
+    return { driveFileIdFromLink, loadDriveImage, loadImageDataUrl, optimizeImageForUpload, revokeObjectUrl };
+})();

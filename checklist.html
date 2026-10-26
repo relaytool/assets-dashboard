@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#09090f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Shift Checklist · FM Operations</title>
+  <link rel="stylesheet" href="dashboard.css?v=asset-tools-20261014-v1">
+  <link rel="stylesheet" href="operations.css?v=eod-ledger-20261003-merged">
+  <link rel="stylesheet" href="app-ui-polish.css?v=global-search-checklist-20261016-v2">
+  <link rel="stylesheet" href="checklist.css?v=shift-checklist-20261016-v1">
+<link rel="stylesheet" href="mobile-graph-polish.css?v=20261026-v2"></head>
+<body>
+<div id="connection-loading" class="connection-loading hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div class="connection-loading-card"><span class="loading-spinner" aria-hidden="true"></span><strong id="connection-loading-title">Connecting to Google Sheets…</strong></div>
+</div>
+<main class="app-shell ops-page">
+  <header class="topbar">
+    <div><div class="eyebrow">FM OPERATIONS</div><h1>Shift checklist</h1><p class="muted">Complete checks during the shift and hand over any unfinished items as they are.</p></div>
+    <div class="account-area"><img id="user-photo" class="user-photo hidden" alt="User"><div><div id="user-name" class="user-name">Not signed in</div><div id="user-email" class="muted"></div></div><button id="sign-out" class="secondary hidden" type="button">Sign out</button></div>
+  </header>
+  <nav class="quick-nav" aria-label="Quick links">
+    <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="quick-links"><span class="menu-toggle-icon">☰</span><span>Quick links</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span></button>
+    <div id="quick-links" class="menu-links">
+      <a href="index.html">Dashboard</a>
+      <a href="asset-tools.html">Asset tools</a>
+      <a href="movement-logger.html">Record movement</a>
+      <a href="routine-outbounds.html">Routine outbounds</a>
+      <a href="checklist.html" class="active">Shift checklist</a>
+      <a href="alerts.html">Alerts <span id="alerts-nav-badge" class="nav-alert-badge hidden">0</span></a>
+      <a href="index.html#warehouse-section">Warehouse</a>
+      <a href="index.html#clients-section">Clients</a>
+      <a href="index.html#audit-trail">Audit trail</a>
+      <a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a>
+      <a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a>
+    </div>
+  </nav>
+
+  <section id="login-card" class="card login-card">
+    <div class="eyebrow">SHIFT OPERATIONS</div><h2>Sign in to continue</h2>
+    <p class="muted">Use the same Google account that has access to the Assets Inventory Ledger.</p>
+    <div id="google-signin-button"></div>
+    <button id="grant-access" class="primary hidden" type="button">Connect Google Sheets</button>
+    <p id="auth-status" class="status" aria-live="polite"></p>
+  </section>
+
+  <section id="checklist-page" class="hidden checklist-page">
+    <div class="source-bar card checklist-source-bar">
+      <div><strong id="workbook-name">Assets Inventory Ledger</strong><div id="sync-status" class="muted">Connecting…</div></div>
+      <button id="refresh" type="button" class="secondary">Refresh</button>
+    </div>
+
+    <section class="card checklist-main-card">
+      <div class="checklist-title-row">
+        <div><div class="eyebrow">SHIFT CONTROL</div><h2>Operational checks</h2><p class="muted">Day shift: 07:00–19:00 · Night shift: 19:00–07:00</p></div>
+        <span id="shift-status-pill" class="checklist-status-pill status-open">IN PROGRESS</span>
+      </div>
+
+      <div class="checklist-shift-selector">
+        <label for="shift-select">Shift to view or update</label>
+        <select id="shift-select"></select>
+        <div id="shift-window-details" class="checklist-shift-details"></div>
+      </div>
+
+      <div class="checklist-progress-row">
+        <div><strong id="checklist-progress-label">0 of 10 checks complete</strong><span id="checklist-progress-help">Changes save to the Shift Checklist sheet.</span></div>
+        <span id="checklist-progress-percent">0%</span>
+      </div>
+      <div class="checklist-progress-track" role="progressbar" aria-label="Checklist completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="checklist-progress-track"><span id="checklist-progress-fill"></span></div>
+
+      <div id="checklist-items" class="checklist-items"></div>
+
+      <label class="checklist-handover-label" for="shift-handover-note">Shift handover notes <span>(optional)</span></label>
+      <textarea id="shift-handover-note" rows="3" placeholder="Record anything the next shift needs to know, especially unresolved stock issues or incomplete checks."></textarea>
+
+      <div class="checklist-bottom-row">
+        <p id="save-status" class="checklist-save-status" aria-live="polite">Checklist changes save automatically.</p>
+        <div class="checklist-actions"><button id="save-checklist" type="button" class="secondary">Save progress</button><button id="close-shift" type="button" class="primary">Close shift &amp; hand over</button></div>
+      </div>
+      <div id="handover-result" class="checklist-handover-result hidden" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="card checklist-instructions">
+      <div class="eyebrow">HOW SHIFT HANDOVER WORKS</div>
+      <p>You can close a shift even when checks are incomplete. The remaining boxes stay unchecked and the log is marked <strong>HANDED OVER</strong> for the next shift. Closed shifts are locked so the recorded handover is preserved.</p>
+    </section>
+  </section>
+</main>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('fm-google-loaded'))"></script>
+<script src="config.js?v=shift-checklist-20261016-v1"></script>
+<script src="checklist.js?v=shift-checklist-20261016-v1"></script>
+</body>
+</html>

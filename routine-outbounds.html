@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="theme-color" content="#09090f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Routine Expected Outbounds</title>
+<link rel="stylesheet" href="dashboard.css?v=asset-tools-20261014-v1">
+<link rel="stylesheet" href="operations.css?v=eod-ledger-20261003-merged">
+<link rel="stylesheet" href="transaction-display.css?v=vehicle-reg-20261012-v1">
+    <link rel="stylesheet" href="app-ui-polish.css?v=ui-20261005-mobile-v5">
+<link rel="stylesheet" href="mobile-graph-polish.css?v=20261026-v2"></head>
+<body>
+<div id="connection-loading" class="connection-loading hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div class="connection-loading-card">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <strong id="connection-loading-title">Connecting to Google Sheets…</strong>
+    
+  </div>
+</div>
+
+<main class="app-shell ops-page">
+<header class="topbar">
+  <div><div class="eyebrow">FM OPERATIONS</div><h1>Routine Expected Outbounds</h1><p class="muted">Maintain the routine movements that appear on the dashboard.</p></div>
+  <div class="account-area"><img id="user-photo" class="user-photo hidden" alt="User"><div><div id="user-name" class="user-name">Not signed in</div><div id="user-email" class="muted"></div></div><button id="sign-out" class="secondary hidden">Sign out</button></div>
+</header>
+<nav class="quick-nav" aria-label="Quick links">
+    <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="quick-links">
+        <span class="menu-toggle-icon">☰</span>
+        <span>Quick links</span>
+        <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+    </button>
+    <div id="quick-links" class="menu-links">
+        <a href="index.html">Dashboard</a>
+<a href="asset-tools.html">Asset tools</a>
+<a href="movement-logger.html">Record movement</a>
+<a href="routine-outbounds.html" class="active">Routine outbounds</a>
+<a href="checklist.html">Shift checklist</a>
+<a href="alerts.html">Alerts <span id="alerts-nav-badge" class="nav-alert-badge hidden">0</span></a>
+<a href="index.html#warehouse-section">Warehouse</a>
+<a href="index.html#clients-section">Clients</a>
+<a href="index.html#audit-trail">Audit trail</a>
+<a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a>
+<a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a>
+    </div>
+</nav>
+<section id="login-card" class="card login-card ops-login"><div class="eyebrow">ROUTINE SCHEDULES</div><h2>Sign in to continue</h2><div id="google-signin-button"></div><button id="grant-access" class="primary hidden">Connect Google Sheets</button><p id="auth-status" class="status"></p></section>
+<section id="routine-page" class="hidden">
+  <div class="toolbar card"><div><strong id="workbook-name">Assets Inventory Ledger</strong><div id="sync-status" class="muted">Waiting for connection</div></div><button id="refresh" class="secondary">Refresh</button></div>
+  <div class="ops-hero"><div><div class="eyebrow">SCHEDULE BUILDER</div><h1>Add routine movement</h1><p class="muted">Example: every Sunday · Sent · 100 Magnums · Client X · NG15.</p></div></div>
+  <section class="card ops-panel"><form id="routine-form" class="ops-form">
+    <label>Frequency<select id="frequency" required><option value="">Select frequency</option><option value="Daily">Every day</option><option value="Weekly">Every week</option></select></label>
+    <label id="weekday-wrap">Weekday<select id="weekday"><option value="">Select weekday</option><option>Sunday</option><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option></select></label>
+    <label>Direction<select id="direction" required><option value="">Select direction</option><option value="Outbound">Sent / outbound</option><option value="Inbound">Received / inbound</option></select></label>
+    <label>Client<select id="client" required><option value="">Loading clients...</option></select></label>
+    <label>Asset<select id="asset" required><option value="">Loading assets...</option></select></label>
+    <label>Quantity<input id="quantity" type="number" min="1" step="1" placeholder="120" required></label>
+    <label>Planned time<input id="planned-time" type="time"></label>
+    <label>Destination<input id="destination" type="text" placeholder="NG15"></label>
+    <label class="wide">Notes<textarea id="notes" rows="2" placeholder="Optional instructions or context..."></textarea></label>
+    <div class="ops-form-actions"><button id="save-routine" class="primary" type="submit">Add routine</button><button id="cancel-edit" class="secondary hidden" type="button">Cancel edit</button><span id="routine-status" class="status"></span></div>
+  </form></section>
+  <section class="card ops-panel"><div class="section-heading"><div><div class="eyebrow">ACTIVE RULES</div><h2>Routine movements</h2></div><span id="routine-count" class="badge">0</span></div><div class="ops-table-wrap"><table class="ops-table"><thead><tr><th>Client / destination</th><th>Schedule</th><th>Asset</th><th class="num">Qty</th><th>Status</th><th>Actions</th></tr></thead><tbody id="routine-body"></tbody></table></div></section>
+</section>
+</main>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('fm-google-loaded'))"></script>
+<script src="config.js?v=shift-checklist-20261016-v1"></script><script src="transaction-display-utils.js?v=registration-aware-20261016-v2"></script><script src="routine-alert-utils.js?v=asset-tools-20261014-v1"></script><script src="routine-outbounds.js?v=eod-ledger-20261003-merged"></script>
+</body></html>

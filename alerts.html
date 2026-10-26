@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="theme-color" content="#09090f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Asset Alerts</title>
+<link rel="stylesheet" href="dashboard.css?v=asset-tools-20261014-v1">
+<link rel="stylesheet" href="operations.css?v=eod-ledger-20261003-merged">
+<link rel="stylesheet" href="transaction-display.css?v=vehicle-reg-20261012-v1">
+    <link rel="stylesheet" href="app-ui-polish.css?v=ui-20261005-mobile-v5">
+<link rel="stylesheet" href="mobile-graph-polish.css?v=20261026-v2"></head>
+<body>
+<div id="connection-loading" class="connection-loading hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div class="connection-loading-card">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <strong id="connection-loading-title">Connecting to Google Sheets…</strong>
+    
+  </div>
+</div>
+
+<main class="app-shell ops-page">
+<header class="topbar">
+  <div><div class="eyebrow">FM OPERATIONS</div><h1>Alerts</h1></div>
+  <div class="account-area"><img id="user-photo" class="user-photo hidden" alt="User"><div><div id="user-name" class="user-name">Not signed in</div><div id="user-email" class="muted"></div></div><button id="sign-out" class="secondary hidden">Sign out</button></div>
+</header>
+<nav class="quick-nav" aria-label="Quick links">
+    <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="quick-links">
+        <span class="menu-toggle-icon">☰</span>
+        <span>Quick links</span>
+        <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+    </button>
+    <div id="quick-links" class="menu-links">
+        <a href="index.html">Dashboard</a>
+<a href="asset-tools.html">Asset tools</a>
+<a href="movement-logger.html">Record movement</a>
+<a href="routine-outbounds.html">Routine outbounds</a>
+<a href="checklist.html">Shift checklist</a>
+<a href="alerts.html" class="active">Alerts <span id="alerts-nav-badge" class="nav-alert-badge hidden">0</span></a>
+<a href="index.html#warehouse-section">Warehouse</a>
+<a href="index.html#clients-section">Clients</a>
+<a href="index.html#audit-trail">Audit trail</a>
+<a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a>
+<a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a>
+    </div>
+</nav>
+<section id="login-card" class="card login-card ops-login"><div class="eyebrow">ALERTS</div><h2>Sign in to continue</h2><div id="google-signin-button"></div><button id="grant-access" class="primary hidden">Connect Google Sheets</button><p id="auth-status" class="status"></p></section>
+<section id="alerts-page" class="hidden">
+  <div class="toolbar card ops-toolbar-card">
+    <div><strong id="workbook-name">Assets Inventory Ledger</strong><div id="sync-status" class="muted">Waiting for connection</div></div>
+    <div class="ops-toolbar-actions"><button id="refresh" class="secondary">Refresh</button></div>
+  </div>
+
+  <div class="ops-stats alert-stats">
+    <div class="ops-stat stat-open"><span>Open</span><strong id="open-count">0</strong><small>Needs attention</small></div>
+    <div class="ops-stat stat-inventory"><span>Inventory</span><strong id="inventory-count">0</strong><small>Warehouse issues</small></div>
+    <div class="ops-stat stat-client"><span>Client</span><strong id="client-count">0</strong><small>Client balances</small></div>
+    <div class="ops-stat stat-ignored"><span>Ignored</span><strong id="ignored-count">0</strong><small>Set aside</small></div>
+    <div class="ops-stat stat-attended"><span>Attended</span><strong id="attended-count">0</strong><small>Resolved</small></div>
+  </div>
+
+  <section class="card ops-panel alerts-panel">
+    <div class="section-heading alerts-heading">
+      <div><div class="eyebrow">ALERT QUEUE</div><h2>Focus on what matters</h2></div>
+      <div class="alerts-heading-actions"><span class="alerts-refresh-note">Live snapshot</span></div>
+    </div>
+
+    <div class="alert-controls">
+      <div class="alert-filter-tabs" role="tablist" aria-label="Alert status">
+        <button type="button" class="alert-filter active" data-alert-filter="OPEN">Open <span id="tab-open-count">0</span></button>
+        <button type="button" class="alert-filter" data-alert-filter="IGNORED">Ignored <span id="tab-ignored-count">0</span></button>
+        <button type="button" class="alert-filter" data-alert-filter="ATTENDED">Attended <span id="tab-attended-count">0</span></button>
+        <button type="button" class="alert-filter" data-alert-filter="ALL">All</button>
+      </div>
+      <label class="alert-search">Search<input id="alert-search" type="search" placeholder="Client, asset, destination..." autocomplete="off"></label>
+    </div>
+
+    
+
+    <div id="alerts-body" class="alert-card-grid"></div>
+    <div id="alerts-empty" class="client-cards-empty hidden"><strong id="alerts-empty-title">No alerts</strong><span id="alerts-empty-text">There are no alerts in the selected view.</span></div>
+  </section>
+</section>
+</main>
+<div id="attend-modal" class="ops-modal hidden" role="dialog" aria-modal="true" aria-labelledby="attend-alert-title">
+  <div class="ops-modal-backdrop" data-close-attend></div>
+  <div class="ops-modal-card">
+    <div class="ops-modal-header"><div><div class="eyebrow">ALERT RESOLUTION</div><h2 id="attend-alert-title">Attend alert</h2></div><button id="close-attend" type="button" class="icon-button" aria-label="Close">×</button></div>
+    <div id="attend-alert-message" class="ops-modal-message"></div>
+    <label>How was this resolved?<textarea id="attend-comment" placeholder="Example: Received 200 pallets and replenished warehouse stock."></textarea></label>
+    <p id="attend-status" class="status"></p>
+    <div class="ops-modal-actions"><button id="cancel-attend" class="secondary" type="button">Cancel</button><button id="save-attend" class="primary" type="button">Attend alert</button></div>
+  </div>
+</div>
+
+<div id="alert-investigate-modal" class="ops-modal hidden" role="dialog" aria-modal="true" aria-labelledby="investigate-title">
+  <div class="ops-modal-backdrop" data-close-investigate></div>
+  <div class="ops-modal-card ops-investigate-card">
+    <div class="ops-modal-header"><div><div class="eyebrow">INVESTIGATE</div><h2 id="investigate-title">Alert details</h2><p id="investigate-summary" class="muted"></p></div><button id="close-investigate" type="button" class="icon-button" aria-label="Close">×</button></div>
+    <div id="investigate-alert-summary" class="investigate-summary"></div>
+    <div class="investigate-filters">
+      <label>Client<select id="investigate-client"><option value="">All clients</option></select></label>
+      <label>Asset<select id="investigate-asset"><option value="">All assets</option></select></label>
+      <label>Day<input id="investigate-date" type="date"></label>
+      <label>Movement<select id="investigate-movement"><option value="">All movements</option><option value="SENT">Sent</option><option value="RECEIVED">Received</option><option value="DISCARD">Discard</option><option value="COMBINE_OUT">Combination component used</option><option value="COMBINE_IN">Combined asset created</option><option value="NORMALISATION">Client ledger normalisation</option></select></label>
+      <button id="clear-investigate-filters" type="button" class="secondary">Clear</button>
+    </div>
+    <div class="investigate-audit-head"><div><strong>Matching audit trail</strong><span id="investigate-count" class="muted">0 movements</span></div></div>
+    <div class="transaction-card-list investigate-transaction-list" id="investigate-body"></div>
+    <div id="investigate-empty" class="client-cards-empty hidden"><strong>No matching movements</strong><span>Adjust the filters to see related transactions.</span></div>
+  </div>
+</div>
+
+<div id="alert-info-modal" class="ops-modal hidden" role="dialog" aria-modal="true" aria-labelledby="alert-info-title">
+  <div class="ops-modal-backdrop" data-close-alert-info></div>
+  <div class="ops-modal-card info-investigate-card">
+    <div class="ops-modal-header"><div><div class="eyebrow">MOVEMENT DETAILS</div><h2 id="alert-info-title">More info</h2></div><button id="close-alert-info" type="button" class="icon-button" aria-label="Close">×</button></div>
+    <div id="alert-info-summary" class="transaction-detail-summary"></div>
+    <div id="alert-info-photo-wrap" class="confirm-photo-wrap hidden"><div class="photo-loading-state" id="alert-info-photo-status">Loading photo...</div><img id="alert-info-photo" alt="Movement photo"><a id="alert-info-photo-link" class="muted" href="#" target="_blank" rel="noopener">Open full size in Drive</a></div>
+    <p id="alert-info-comment" class="muted hidden"></p><p id="alert-info-empty" class="muted hidden">No photo or comment were recorded for this movement.</p>
+  </div>
+</div>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('fm-google-loaded'))"></script>
+<script src="config.js?v=shift-checklist-20261016-v1"></script><script src="transaction-display-utils.js?v=registration-aware-20261016-v2"></script><script src="routine-alert-utils.js?v=asset-tools-20261014-v1"></script><script src="alerts.js?v=asset-tools-20261014-v1"></script>
+</body></html>

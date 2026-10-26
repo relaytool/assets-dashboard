@@ -2,15 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#09090f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     <title>FM Assets Dashboard</title>
 
-    <link rel="stylesheet" href="dashboard.css">
-    <link rel="icon" type="image/x-icon" href="https://relaytool.github.io/dashboard-alpha/fav.ico">
+    <link rel="stylesheet" href="dashboard.css?v=graph-ranges-mobile-20261026-v2">
+<link rel="stylesheet" href="transaction-display.css?v=vehicle-reg-20261012-v1">
+    <link rel="stylesheet" href="app-ui-polish.css?v=global-search-checklist-20261016-v2">
+    <link rel="stylesheet" href="mobile-graph-polish.css?v=20261026-v2">
 </head>
 
 <body>
+<div id="connection-loading" class="connection-loading hidden" role="status" aria-live="polite" aria-hidden="true">
+  <div class="connection-loading-card">
+    <span class="loading-spinner" aria-hidden="true"></span>
+    <strong id="connection-loading-title">Connecting to Google Sheets…</strong>
+    
+  </div>
+</div>
+
 
 <main class="app-shell">
 
@@ -22,7 +35,7 @@
             <h1>Assets Dashboard</h1>
 
             <p class="muted">
-                UB11 inbound, outbound and warehouse asset inventory.
+                UB11 routine inbound, outbound and warehouse asset inventory.
             </p>
         </div>
 
@@ -59,13 +72,27 @@
 
     </header>
 
-    <nav class="menu-bar" aria-label="Quick links">
-        <a class="active" href="index.html">Dashboard</a>
-        <a href="movement-logger.html">Record movement</a>
-        <a href="#warehouse-section">Warehouse</a>
-        <a href="#clients-section">Clients</a>
-        <a href="#audit-trail">Audit trail</a>
-    </nav>
+    <nav class="quick-nav" aria-label="Quick links">
+    <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="quick-links">
+        <span class="menu-toggle-icon">☰</span>
+        <span>Quick links</span>
+        <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+    </button>
+    <div id="quick-links" class="menu-links">
+        <a href="index.html" class="active">Dashboard</a>
+<a href="asset-tools.html">Asset tools</a>
+<a href="movement-logger.html">Record movement</a>
+<a href="routine-outbounds.html">Routine outbounds</a>
+<a href="checklist.html">Shift checklist</a>
+<a href="alerts.html">Alerts <span id="alerts-nav-badge" class="nav-alert-badge hidden">0</span></a>
+<a href="index.html#warehouse-section">Warehouse</a>
+<a href="index.html#clients-section">Clients</a>
+<a href="index.html#audit-trail">Audit trail</a>
+<a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a>
+<a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a>
+<a href="https://relaytool.github.io/dailyreport/transactions.html" target="_blank" rel="noopener">Receipts</a>
+    </div>
+</nav>
 
 
     <!-- LOGIN -->
@@ -78,13 +105,14 @@
         <h2>Sign in to continue</h2>
 
         <p class="muted">
-            Sign in with Google to access your FM spreadsheet.
+            Sign in with Google to access the Assets Inventory Ledger.
         </p>
 
         <div id="google-signin-button"></div>
 
         <button
             id="grant-access"
+            type="button"
             class="primary hidden"
         >
             Allow Sheets & Drive access
@@ -110,10 +138,6 @@
         <div class="toolbar card">
 
             <div>
-
-                <div class="eyebrow">
-                    SOURCE
-                </div>
 
                 <div
                     id="workbook-name"
@@ -176,6 +200,48 @@
         </div>
 
 
+        <section class="global-search-panel card" aria-label="Search dashboard">
+            <div class="global-search-heading">
+                <div>
+                    <div class="eyebrow">GLOBAL SEARCH</div>
+                    <h2>Find anything</h2>
+                    <p class="muted">Search vehicle registrations in comments, clients, asset types, quantities, users, routine loads and alerts.</p>
+                </div>
+            </div>
+            <div class="global-search-control">
+                <span class="global-search-icon" aria-hidden="true">⌕</span>
+                <input id="global-search" type="search" autocomplete="off" placeholder="e.g. AB12 CDE, Shein, Magnum, pallet…" aria-label="Search all dashboard records">
+                <button id="clear-global-search" type="button" class="secondary small-button">Clear</button>
+            </div>
+            <div id="global-search-results" class="global-search-results hidden" aria-live="polite"></div>
+        </section>
+
+        <section class="dashboard-filters card" aria-label="Dashboard filters">
+            <div class="filter-heading">
+                <div>
+                    <div class="eyebrow">FILTERS</div>
+                    <h2>Dashboard view</h2>
+                </div>
+                <button id="clear-dashboard-filters" type="button" class="secondary small-button">Clear</button>
+            </div>
+            <div class="dashboard-filter-grid">
+                <label>Client
+                    <select id="dashboard-filter-client">
+                        <option value="">All clients</option>
+                    </select>
+                </label>
+                <label>Day
+                    <input id="dashboard-filter-date" type="date">
+                </label>
+                <label>Asset type
+                    <select id="dashboard-filter-asset">
+                        <option value="">All asset types</option>
+                    </select>
+                </label>
+            </div>
+            <p class="filter-help"></p>
+        </section>
+
         <!-- WAREHOUSE ASSETS -->
 
         <section id="warehouse-section" class="card warehouse-card">
@@ -210,7 +276,7 @@
                     </h2>
 
                     <p class="muted">
-                        Clients are taken from the Client List in the Assets Inventory Ledger.
+                        
                     </p>
 
                 </div>
@@ -280,9 +346,10 @@
 
                             <tr>
                                 <th>Client</th>
-                                <th>Planned arrival</th>
-                                <th class="num">Pallets</th>
-                                <th>Bags / loose parcels</th>
+                                <th>Schedule</th>
+                                <th>Asset</th>
+                                <th class="num">Qty</th>
+                                <th>Destination</th>
                             </tr>
 
                         </thead>
@@ -316,12 +383,13 @@
 
                     </div>
 
-                    <span
-                        id="outbound-badge"
-                        class="badge"
-                    >
-                        0
-                    </span>
+                    <div class="shein-estimate-actions">
+                        <label class="shein-estimate-control" title="Estimate from Shein Domestic Red Sleeves received since the last sent movement">
+                            <input type="checkbox" id="shein-outbound-estimate" checked>
+                            <span>Shein estimate</span>
+                        </label>
+                        <span id="outbound-badge" class="badge">0</span>
+                    </div>
 
                 </div>
 
@@ -334,9 +402,10 @@
 
                             <tr>
                                 <th>Client</th>
-                                <th>Planned arrival</th>
-                                <th class="num">Pallets</th>
-                                <th>Bags / loose parcels</th>
+                                <th>Schedule</th>
+                                <th>Asset</th>
+                                <th class="num">Qty</th>
+                                <th>Destination</th>
                             </tr>
 
                         </thead>
@@ -346,6 +415,7 @@
                         ></tbody>
 
                     </table>
+                    <p id="shein-estimate-status" class="shein-estimate-status hidden" aria-live="polite"></p>
 
                 </div>
 
@@ -376,42 +446,45 @@
 
 
             <form id="movement-form" class="form-grid movement-form-multi">
-                <label>
-                    Client
-                    <select id="client" required>
-                        <option value="">Loading clients...</option>
-                    </select>
-                    <span id="client-help" class="field-help"></span>
-                </label>
-
-                <label>
-                    Movement
-                    <select id="movement" required>
-                        <option value="RECEIVED">Received</option>
-                        <option value="SENT">Sent</option>
-                        <option value="DISCARD">Discard</option>
-                    </select>
-                </label>
+                <div class="client-movement-batch">
+                    <div class="batch-header-row">
+                        <div>
+                            <div class="eyebrow">BATCH MOVEMENTS</div>
+                            <h3>Log multiple clients in one go</h3>
+                            <p class="muted">Add multiple clients and asset types in one submission.</p>
+                        </div>
+                        <button id="add-client-entry" class="secondary" type="button">+ Add another client</button>
+                    </div>
+                    <div id="client-movement-entries" class="client-movement-entries"></div>
+                </div>
 
                 <label>
                     Timestamp
                     <input id="timestamp" type="time" required>
                 </label>
 
-                <div class="dashboard-asset-section">
-                    <div class="dashboard-asset-heading">
-                        <div>
-                            <div class="eyebrow">ASSETS</div>
-                            <h3>Asset types and quantities</h3>
+                <div class="attachment-section">
+                    <div class="attachment-field">
+                        <label for="movement-photo">Photo (optional)</label>
+                        <div class="photo-input-row">
+                            <input type="file" id="movement-photo" accept="image/*">
+                            <input type="file" id="movement-photo-camera" accept="image/*" capture="environment" class="camera-input">
+                            <button type="button" id="take-photo" class="secondary">Take photo</button>
+                            <button type="button" id="clear-photo" class="secondary hidden">Remove</button>
                         </div>
-                        <button id="add-asset-row" class="secondary" type="button">+ Add asset</button>
+                        <div id="photo-preview-wrap" class="photo-preview-wrap hidden">
+                            <img id="photo-preview" alt="Selected movement photo preview">
+                        </div>
+                        <p class="field-help">On Android/Chrome, use Take photo for the camera. </p>
                     </div>
-                    <div id="asset-rows" class="asset-rows"></div>
+                    <label class="comment-field">Comment (optional)
+                        <textarea id="movement-comment" rows="2" placeholder="Add any notes about this batch..."></textarea>
+                    </label>
                 </div>
 
                 <div class="movement-preview" id="movement-preview">
-                    <span class="preview-label">ENTRY SUMMARY</span>
-                    <strong id="preview-text">Select a client and add one or more asset types with quantities.</strong>
+                    <span class="preview-label">BATCH SUMMARY</span>
+                    <strong id="preview-text">Add one or more client movements. Each client can contain multiple asset types.</strong>
                 </div>
 
                 <button class="primary submit-button" type="submit">Record movements</button>
@@ -426,49 +499,25 @@
         <section id="audit-trail" class="card">
 
             <div class="section-heading">
-
                 <div>
-
-                    <div class="eyebrow">
-                        AUDIT TRAIL
-                    </div>
-
-                    <h2>
-                        Recent asset movements
-                    </h2>
-
+                    <div class="eyebrow">AUDIT TRAIL</div>
+                    <h2>Asset transactions</h2>
+                    <p class="muted">Filter and inspect movements, comments and photos.</p>
                 </div>
-
+                <span id="audit-count" class="badge">0</span>
             </div>
 
-
-            <div
-                class="table-wrap"
-                id="Audit-trail-visibilityx"
-            >
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-                            <th>Timestamp</th>
-                            <th>Client</th>
-                            <th>Movement</th>
-                            <th>Asset</th>
-                            <th class="num">Quantity</th>
-                            <th>User</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody
-                        id="transactions-body"
-                    ></tbody>
-
-                </table>
-
+            <div class="audit-filters">
+                <label>Client<select id="dashboard-filter-client-audit"><option value="">All clients</option></select></label>
+                <label>Day<input type="date" id="dashboard-filter-date-audit"></label>
+                <label>Asset type<select id="dashboard-filter-asset-audit"><option value="">All asset types</option></select></label>
+                <button type="button" id="clear-audit-filters" class="secondary">Clear</button>
             </div>
+
+            <div class="audit-category-list" id="transactions-body"></div>
+            <div class="audit-adjustment-list" id="audit-adjustments-body"></div>
+
+            <div id="transaction-summary" class="transaction-summary hidden" aria-live="polite"></div>
 
         </section>
 
@@ -574,14 +623,22 @@
                     ></p>
 
                 </div>
-
+<div class="graph-controls-wrap">
+                    <div class="graph-range-switch" role="group" aria-label="Client asset graph time range" data-graph-range-group="client">
+                        <button type="button" class="graph-range-button is-active" data-graph-range="7d" aria-pressed="true">7D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="30d" aria-pressed="false">30D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="90d" aria-pressed="false">90D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="all" aria-pressed="false">All</button>
+                    </div>
+                    <span class="graph-period" data-graph-period>Last 7 days</span>
+                </div>
             </div>
-
 
             <div
                 id="client-sent-graph"
                 class="client-sent-graph"
             ></div>
+            <p class="graph-touch-hint" data-graph-hint>Swipe to explore · Tap a point for details</p>
 
         </section>
 
@@ -589,50 +646,160 @@
         <section class="details-section">
 
             <div class="details-section-heading">
-
                 <div>
-
-                    <div class="eyebrow">
-                        LEDGER
-                    </div>
-
-                    <h3>
-                        Asset transactions
-                    </h3>
-
+                    <div class="eyebrow">LEDGER</div>
+                    <h3>Asset transactions</h3>
                 </div>
-
+            </div>
+            <div class="client-details-filters">
+                <label>Day<input type="date" id="client-details-filter-date"></label>
+                <label>Asset type<select id="client-details-filter-asset"><option value="">All asset types</option></select></label>
+                <button type="button" class="secondary" id="clear-client-details-filters">Clear</button>
             </div>
 
 
-            <div class="table-wrap">
+            <div id="client-details-transaction-summary" class="transaction-summary hidden" aria-live="polite"></div>
 
-                <table>
-
-                    <thead>
-
-                        <tr>
-                            <th>Time</th>
-                            <th>Movement</th>
-                            <th>Asset type</th>
-                            <th class="num">Quantity</th>
-                            <th>User</th>
-                        </tr>
-
-                    </thead>
-
-                    <tbody
-                        id="client-details-transactions"
-                    ></tbody>
-
-                </table>
-
-            </div>
+            <div class="transaction-card-list" id="client-details-transactions"></div>
 
         </section>
 
     </div>
 
+</div>
+
+
+
+<!-- CLIENT LEDGER EXPORT -->
+<div id="client-ledger-export-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="client-ledger-export-title">
+    <div class="modal-backdrop" data-close-client-ledger-export></div>
+    <div class="modal-card client-ledger-export-card">
+        <div class="modal-header">
+            <div>
+                <div class="eyebrow">CLIENT TOTALS</div>
+                <h2 id="client-ledger-export-title">Export client ledger</h2>
+                
+            </div>
+            <button type="button" id="close-client-ledger-export" class="icon-button" aria-label="Close">×</button>
+        </div>
+        <div class="client-ledger-export-form">
+            <div class="client-ledger-export-client">
+                <span>Client</span>
+                <strong id="client-ledger-export-client"></strong>
+            </div>
+            <label>From date<input type="date" id="client-ledger-export-from"></label>
+            <label>To date<input type="date" id="client-ledger-export-to"></label>
+            <div class="client-ledger-export-assets-field">
+                <div class="client-ledger-export-assets-heading">
+                    <span>Asset types</span>
+                    <button type="button" class="link-button" id="client-ledger-export-select-all">Select all</button>
+                </div>
+                <div id="client-ledger-export-assets" class="client-ledger-export-assets" role="group" aria-label="Asset types"></div>
+                <small class="muted">Select one or more assets, or leave all selected.</small>
+            </div>
+            <label class="client-ledger-week-field">
+                Week to report
+                <input type="week" id="client-ledger-export-week" aria-label="Choose the week for the weekly PDF report">
+            </label>
+            <label class="client-ledger-export-check">
+                <input type="checkbox" id="client-ledger-export-photos" checked>
+                <span>Include and archive transaction photos (compact previews where available)</span>
+            </label>
+            <p id="client-ledger-export-status" class="status" aria-live="polite"></p>
+        </div>
+        <div class="client-ledger-export-actions">
+            <button type="button" class="secondary" id="cancel-client-ledger-export">Cancel</button>
+            <div class="client-ledger-export-action-group">
+                <button type="button" class="secondary" id="run-client-ledger-pdf">Export PDF</button>
+                <button type="button" class="secondary" id="run-client-ledger-week-pdf">Export Weekly PDF</button>
+                <button type="button" class="primary" id="run-client-ledger-export">Save XLSX + Client Sheet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WAREHOUSE ASSET DETAILS -->
+<div id="warehouse-asset-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="warehouse-asset-modal-title">
+    <div class="modal-backdrop" data-close-warehouse-asset></div>
+    <div class="modal-card warehouse-asset-details-card">
+        <div class="modal-header">
+            <div>
+                <div class="eyebrow">WAREHOUSE ASSET HISTORY</div>
+                <h2 id="warehouse-asset-modal-title">Asset</h2>
+                <p id="warehouse-asset-modal-subtitle" class="muted"></p>
+            </div>
+            <button type="button" id="close-warehouse-asset" class="icon-button" aria-label="Close">×</button>
+        </div>
+
+        <div class="warehouse-asset-history-summary" id="warehouse-asset-history-summary"></div>
+
+        <section class="details-section asset-history-graph-section">
+            <div class="details-section-heading">
+                <div>
+                    <div class="eyebrow">MOVEMENT HISTORY</div>
+                    <h3>Sent vs received</h3>
+                    <p class="muted"></p>
+                </div>
+<div class="graph-controls-wrap">
+                    <div class="graph-range-switch" role="group" aria-label="Warehouse movement graph time range" data-graph-range-group="movement">
+                        <button type="button" class="graph-range-button is-active" data-graph-range="7d" aria-pressed="true">7D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="30d" aria-pressed="false">30D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="90d" aria-pressed="false">90D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="all" aria-pressed="false">All</button>
+                    </div>
+                    <span class="graph-period" data-graph-period>Last 7 days</span>
+                </div>
+            </div>
+            <div id="warehouse-asset-movement-graph" class="asset-history-graph"></div>
+            <p class="graph-touch-hint" data-graph-hint>Swipe to explore · Tap a point for details</p>
+        </section>
+
+        <section class="details-section asset-history-graph-section">
+            <div class="details-section-heading">
+                <div>
+                    <div class="eyebrow">STOCK HISTORY</div>
+                    <h3>Quantity over time</h3>
+                    <p class="muted"></p>
+                </div>
+<div class="graph-controls-wrap">
+                    <div class="graph-range-switch" role="group" aria-label="Warehouse quantity graph time range" data-graph-range-group="quantity">
+                        <button type="button" class="graph-range-button is-active" data-graph-range="7d" aria-pressed="true">7D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="30d" aria-pressed="false">30D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="90d" aria-pressed="false">90D</button>
+                        <button type="button" class="graph-range-button" data-graph-range="all" aria-pressed="false">All</button>
+                    </div>
+                    <span class="graph-period" data-graph-period>Last 7 days</span>
+                </div>
+            </div>
+            <div id="warehouse-asset-quantity-graph" class="asset-history-graph"></div>
+            <p class="graph-touch-hint" data-graph-hint>Swipe to explore · Tap a point for details</p>
+        </section>
+    </div>
+</div>
+
+
+
+
+<!-- MOVEMENT DETAILS -->
+<div id="info-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="info-modal-title">
+    <div class="modal-backdrop" data-close-info></div>
+    <div class="modal-card info-card">
+        <div class="modal-header">
+            <div>
+                <div class="eyebrow">MOVEMENT DETAILS</div>
+                <h2 id="info-modal-title">More info</h2>
+            </div>
+            <button type="button" id="close-info" class="icon-button" aria-label="Close">×</button>
+        </div>
+        <div id="info-summary" class="transaction-detail-summary"></div>
+        <div id="info-photo-wrap" class="confirm-photo-wrap hidden">
+            <div id="info-photo-status" class="photo-loading-state hidden">Loading photo...</div>
+            <img id="info-photo" alt="Movement photo" decoding="async">
+            <a id="info-photo-link" class="muted" href="#" target="_blank" rel="noopener">Open full size in Drive</a>
+        </div>
+        <p id="info-comment" class="muted hidden"></p>
+        <p id="info-empty" class="muted hidden">No photo or comment were recorded for this movement.</p>
+    </div>
 </div>
 
 
@@ -663,9 +830,7 @@
                     Manage asset inventory
                 </h2>
 
-                <p class="muted">
-                    Add new asset types, rename assets or remove asset types.
-                </p>
+                <p class="muted">Update counts available to send and manage asset types.</p>
 
             </div>
 
@@ -721,10 +886,8 @@
         </div>
 
 
-        <p
-            id="inventory-manage-status"
-            class="status"
-        ></p>
+        <div class="availability-save-row"><button type="button" id="save-availability" class="secondary">Save availability counts</button></div>
+        <p id="inventory-manage-status" class="status" aria-live="polite"></p>
 
 
         <div class="table-wrap manage-table-wrap">
@@ -735,7 +898,8 @@
 
                     <tr>
                         <th>Asset type</th>
-                        <th class="num">Balance</th>
+                        <th class="num">Total</th>
+                        <th>Available to send today</th>
                         <th class="actions-column">Actions</th>
                     </tr>
 
@@ -754,6 +918,14 @@
 </div>
 
 
+<div id="movement-submit-loading" class="movement-submit-loading hidden" role="status" aria-live="assertive" aria-hidden="true">
+    <div class="movement-submit-loading-card">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <strong id="movement-submit-loading-title">Saving movement...</strong>
+        <span id="movement-submit-loading-detail">Please wait. Do not press the button again.</span>
+    </div>
+</div>
+
 <script
       src="https://accounts.google.com/gsi/client"
       async
@@ -761,8 +933,12 @@
       onload="window.dispatchEvent(new Event('fm-google-loaded'))"
     ></script>
 
-<script src="config.js?v=20260918-authfix"></script>
-<script src="dashboard.js?v=20260918-authfix"></script>
+<script src="config.js?v=client-types-shein-20261026-v1"></script><script src="sheet-writer.js?v=sheet-writer-20261007-v1"></script>
+<script src="movement-batch.js?v=multi-client-20261005"></script>
+<script src="transaction-display-utils.js?v=registration-aware-20261016-v2"></script>
+<script src="routine-alert-utils.js?v=asset-tools-20261014-v1"></script>
+<script src="dashboard-features.js?v=client-types-shein-20261026-v1"></script>
+<script src="dashboard.js?v=graph-ranges-mobile-20261026-v2"></script>
 
 </body>
 </html>
