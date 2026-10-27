@@ -1,0 +1,85 @@
+/* Audit trail: fast today's view, flexible date selection, mobile-first controls. */
+.audit-period-bar {
+  display:flex; flex-wrap:wrap; align-items:center; gap:9px 18px;
+  padding:15px 20px 12px; background:#fff; border-top:1px solid #e5eaf2;
+}
+.audit-period-switch {
+  display:flex; flex:1 1 100%; flex-wrap:wrap; gap:7px; align-items:center;
+  min-width:0;
+}
+.audit-period-switch button {
+  appearance:none; border:1px solid #d8e1ed!important; border-radius:999px;
+  background:#f6f8fc!important; color:#49576b!important;
+  min-height:39px; padding:9px 15px; line-height:1.15; font-size:12px; font-weight:750;
+  cursor:pointer; touch-action:manipulation; white-space:nowrap;
+}
+.audit-period-switch button:hover { background:#edf2fc!important; }
+.audit-period-switch button.is-active,
+.audit-period-switch button[aria-pressed="true"] {
+  background:#173c75!important; border-color:#173c75!important; color:#fff!important;
+  box-shadow:0 2px 7px rgba(16,48,97,.14);
+}
+.audit-period-switch button:focus-visible,
+.audit-more:focus-visible {outline:3px solid #78aff7;outline-offset:2px;}
+.audit-period-caption { margin:0; font-size:12px; color:#64748b; line-height:1.45; }
+.audit-filters.audit-filters {
+  display:grid!important;
+  grid-template-columns:minmax(170px,1.2fr) minmax(170px,.95fr) minmax(170px,1.2fr) auto!important;
+  align-items:end; gap:12px; padding:12px 20px 18px!important;
+  background:#fff; border-top:0;
+}
+.audit-filters.audit-filters label {min-width:0;display:flex;flex-direction:column;gap:6px;}
+.audit-filters.audit-filters input[type="date"],
+.audit-filters.audit-filters select {
+  display:block; min-width:0!important; width:100%!important; max-width:100%!important;
+  height:46px; min-height:46px; padding:9px 11px;
+  border:1px solid #d2dbea!important; background:#fff!important; color:#192434!important;
+  border-radius:11px; font-size:16px!important; line-height:normal;
+  box-sizing:border-box; -webkit-appearance:auto; appearance:auto;
+}
+.audit-filters.audit-filters input[type="date"]::-webkit-date-and-time-value {text-align:left;min-height:1.35em;}
+.audit-filters.audit-filters input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor:pointer; padding:5px; margin-inline-start:2px;
+}
+.audit-filters.audit-filters button {min-height:46px; height:46px;}
+.audit-range-fields { grid-column:1/-1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.audit-range-fields.hidden {display:none!important;}
+.audit-range-error {color:#b42318;background:#fff1f0;padding:10px 20px;font-size:12px;margin:0;}
+.audit-empty-period { display:flex; flex-direction:column; gap:5px; padding:22px 14px; text-align:center;
+  border-radius:12px; border:1px dashed #d6dfeb; background:#fafcfe; color:#26364c; }
+.audit-empty-period strong {font-size:14px;}
+.audit-empty-period span {font-size:12px;line-height:1.5;color:#6e7b8d;}
+.audit-older-heading {margin:18px 0 11px;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding-bottom:9px;border-bottom:1px solid #e7edf4;}
+.audit-older-heading strong {font-size:13px;color:#33415a;}
+.audit-older-heading span {font-size:12px;color:#64748b;}
+.audit-older-button {background:#eff5ff!important;color:#204d8c!important;border-color:#cbdcf5!important;}
+.audit-category-count {font-variant-numeric:tabular-nums;}
+@media(max-width:760px) {
+  .audit-period-bar { padding:12px 14px 9px; gap:7px; }
+  .audit-period-switch {flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding:2px 1px 9px;
+    -webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain;scrollbar-width:thin;scroll-snap-type:x proximity;}
+  .audit-period-switch button {min-height:43px;flex:0 0 auto;padding:10px 14px;font-size:12px;scroll-snap-align:start;}
+  .audit-period-caption {font-size:11px;line-height:1.35;padding:0 1px;}
+  .audit-filters.audit-filters {grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    padding:10px 14px 16px!important;gap:11px!important;}
+  .audit-filters .audit-client-field,.audit-filters .audit-asset-field {grid-column:span 1!important;}
+  .audit-filters .audit-day-field,.audit-filters .audit-range-fields,
+  .audit-filters .audit-clear-button {grid-column:1/-1!important;}
+  .audit-filters.audit-filters input[type="date"],.audit-filters.audit-filters select {
+    height:46px!important;min-height:46px!important;min-width:0!important;width:100%!important;
+    padding:8px 10px!important;font-size:16px!important; }
+  .audit-filters.audit-filters label {font-size:11px;}
+  .audit-filters.audit-filters button {width:100%;}
+  .audit-range-fields {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .audit-category-heading {flex-wrap:wrap;row-gap:5px;}
+  .audit-category-count {margin-left:auto;}
+  .audit-category-body .audit-more {font-size:12px;white-space:normal;min-height:46px;}
+  .audit-empty-period {padding:17px 9px;}
+}
+@media(max-width:365px){
+  .audit-filters .audit-client-field,.audit-filters .audit-asset-field {grid-column:1/-1!important;}
+  .audit-filters.audit-filters {gap:10px!important;}
+  .audit-filters.audit-filters input[type="date"] {font-size:15px!important;padding:7px 6px!important;}
+  .audit-range-fields {gap:7px;}
+}

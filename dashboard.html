@@ -9,10 +9,11 @@
 
     <title>FM Assets Dashboard</title>
 
-    <link rel="stylesheet" href="dashboard.css?v=graph-ranges-mobile-20261026-v2">
+    <link rel="stylesheet" href="dashboard.css?v=audit-date-range-20261026-v1">
 <link rel="stylesheet" href="transaction-display.css?v=vehicle-reg-20261012-v1">
     <link rel="stylesheet" href="app-ui-polish.css?v=global-search-checklist-20261016-v2">
-    <link rel="stylesheet" href="mobile-graph-polish.css?v=20261026-v2">
+    <link rel="stylesheet" href="mobile-graph-polish.css?v=audit-date-range-20261026-v1">
+    <link rel="stylesheet" href="audit-trail-polish.css?v=20261026-v1">
 </head>
 
 <body>
@@ -507,12 +508,28 @@
                 <span id="audit-count" class="badge">0</span>
             </div>
 
-            <div class="audit-filters">
-                <label>Client<select id="dashboard-filter-client-audit"><option value="">All clients</option></select></label>
-                <label>Day<input type="date" id="dashboard-filter-date-audit"></label>
-                <label>Asset type<select id="dashboard-filter-asset-audit"><option value="">All asset types</option></select></label>
-                <button type="button" id="clear-audit-filters" class="secondary">Clear</button>
+            <div class="audit-period-bar">
+                <div class="audit-period-switch" role="group" aria-label="Audit trail time period">
+                    <button type="button" data-audit-period="today" aria-pressed="true" class="is-active">Today</button>
+                    <button type="button" data-audit-period="yesterday" aria-pressed="false">Yesterday</button>
+                    <button type="button" data-audit-period="7d" aria-pressed="false">7 days</button>
+                    <button type="button" data-audit-period="30d" aria-pressed="false">30 days</button>
+                    <button type="button" data-audit-period="all" aria-pressed="false">All dates</button>
+                    <button type="button" data-audit-period="custom" aria-pressed="false">Date range</button>
+                </div>
+                <p class="audit-period-caption" id="audit-period-caption" aria-live="polite">Showing today's movements</p>
             </div>
+            <div class="audit-filters">
+                <label class="audit-client-field">Client<select id="dashboard-filter-client-audit"><option value="">All clients</option></select></label>
+                <label class="audit-day-field">Specific day<input type="date" id="dashboard-filter-date-audit" aria-label="Choose an audit trail day"></label>
+                <label class="audit-asset-field">Asset type<select id="dashboard-filter-asset-audit"><option value="">All asset types</option></select></label>
+                <button type="button" id="clear-audit-filters" class="secondary audit-clear-button">Reset filters</button>
+                <div class="audit-range-fields hidden" id="audit-range-fields">
+                    <label>From<input type="date" id="audit-range-from" aria-label="Audit range start date"></label>
+                    <label>To<input type="date" id="audit-range-to" aria-label="Audit range end date"></label>
+                </div>
+            </div>
+            <p id="audit-range-error" class="audit-range-error hidden" role="status"></p>
 
             <div class="audit-category-list" id="transactions-body"></div>
             <div class="audit-adjustment-list" id="audit-adjustments-body"></div>
@@ -938,7 +955,7 @@
 <script src="transaction-display-utils.js?v=registration-aware-20261016-v2"></script>
 <script src="routine-alert-utils.js?v=asset-tools-20261014-v1"></script>
 <script src="dashboard-features.js?v=client-types-shein-20261026-v1"></script>
-<script src="dashboard.js?v=graph-ranges-mobile-20261026-v2"></script>
+<script src="dashboard.js?v=audit-date-range-20261026-v1"></script>
 
 </body>
 </html>

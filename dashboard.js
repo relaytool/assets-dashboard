@@ -14,7 +14,12 @@
     let tokenRequestPromise = null;
     const auditOpen = new Map();
     const auditLimits = new Map();
-    const AUDIT_PAGE_SIZE = 60;
+    const auditOlderLimits = new Map();
+    const AUDIT_PAGE_SIZE = 20;
+    const auditDateFilter = { mode: "today", day: "", from: "", to: "" };
+    const AUDIT_UK_FORMATTER = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit"
+    });
     const SHEIN_ESTIMATE_PREF = "fmSheinOutboundEstimateEnabled";
     let sheinEstimateEnabled = true;
 
@@ -218,13 +223,13 @@ document.addEventListener(
 
         const dashboardFilterPairs = [
             ["dashboard-filter-client", "dashboard-filter-client-audit"],
-            ["dashboard-filter-date", "dashboard-filter-date-audit"],
             ["dashboard-filter-asset", "dashboard-filter-asset-audit"]
         ];
 
         dashboardFilterPairs.forEach(([mainId, auditId]) => {
             $(mainId)?.addEventListener("change", () => {
                 if ($(auditId)) $(auditId).value = $(mainId).value;
+                resetAuditPaging();
                 renderClientCards();
                 renderWarehouseAssets();
                 renderAudit();
@@ -232,10 +237,51 @@ document.addEventListener(
             });
             $(auditId)?.addEventListener("change", () => {
                 if ($(mainId)) $(mainId).value = $(auditId).value;
+                resetAuditPaging();
                 renderClientCards();
                 renderWarehouseAssets();
                 renderAudit();
                 renderFilteredLoadTables();
+            });
+        });
+
+        // The dashboard's day filter can select an audit date, but dates chosen
+        // within the audit panel do not change the warehouse or load dashboard.
+        $("dashboard-filter-date")?.addEventListener("change", () => {
+            auditDateFilter.day = $("dashboard-filter-date").value;
+            auditDateFilter.mode = auditDateFilter.day ? "day" : "today";
+            resetAuditPaging();
+            renderClientCards();
+            renderWarehouseAssets();
+            renderAudit();
+            renderFilteredLoadTables();
+        });
+        $("dashboard-filter-date-audit")?.addEventListener("change", event => {
+            auditDateFilter.day = event.target.value;
+            auditDateFilter.mode = auditDateFilter.day ? "day" : "today";
+            resetAuditPaging();
+            renderAudit();
+        });
+        $("audit-trail")?.addEventListener("click", event => {
+            const periodButton = event.target.closest("button[data-audit-period]");
+            if (!periodButton) return;
+            const period = periodButton.dataset.auditPeriod;
+            if (!["today", "yesterday", "7d", "30d", "all", "custom"].includes(period)) return;
+            auditDateFilter.mode = period;
+            if (period === "custom" && (!auditDateFilter.from || !auditDateFilter.to)) {
+                const today = auditUkDayKey(new Date());
+                auditDateFilter.from = auditSubtractDays(today, 6);
+                auditDateFilter.to = today;
+            }
+            resetAuditPaging();
+            renderAudit();
+        });
+        ["from", "to"].forEach(boundary => {
+            $("audit-range-" + boundary)?.addEventListener("change", event => {
+                auditDateFilter[boundary] = event.target.value;
+                auditDateFilter.mode = "custom";
+                resetAuditPaging();
+                renderAudit();
             });
         });
 
@@ -249,6 +295,13 @@ document.addEventListener(
             if (more) {
                 const key = more.dataset.auditMore;
                 auditLimits.set(key, (auditLimits.get(key) || AUDIT_PAGE_SIZE) + AUDIT_PAGE_SIZE);
+                renderAudit();
+                return;
+            }
+            const older = event.target.closest("[data-audit-older]");
+            if (older) {
+                const key = older.dataset.auditOlder;
+                auditOlderLimits.set(key, (auditOlderLimits.get(key) || 0) + AUDIT_PAGE_SIZE);
                 renderAudit();
                 return;
             }
@@ -3845,15 +3898,19 @@ function bindQuickMenu() {
             assetAuditSelect.value = assets.includes(filters.asset) ? filters.asset : "";
         }
 
-        if ($("dashboard-filter-date-audit")) {
-            $("dashboard-filter-date-audit").value = filters.date;
-        }
+        // The audit day/range controls are independent of the dashboard's date filter.
+        syncAuditDateControls();
     }
 
     function clearDashboardFilters() {
-        ["dashboard-filter-client","dashboard-filter-date","dashboard-filter-asset",
-         "dashboard-filter-client-audit","dashboard-filter-date-audit","dashboard-filter-asset-audit"]
+        ["dashboard-filter-client", "dashboard-filter-date", "dashboard-filter-asset",
+         "dashboard-filter-client-audit", "dashboard-filter-asset-audit"]
             .forEach(id => { if ($(id)) $(id).value = ""; });
+        auditDateFilter.mode = "today";
+        auditDateFilter.day = "";
+        auditDateFilter.from = "";
+        auditDateFilter.to = "";
+        resetAuditPaging();
         renderClientCards();
         renderWarehouseAssets();
         renderAudit();
@@ -3961,10 +4018,106 @@ function bindQuickMenu() {
     }
 
 
+    function resetAuditPaging() {
+        auditLimits.clear();
+        auditOlderLimits.clear();
+    }
+
+    // The operations day is always UK-local, even when someone opens the
+    // dashboard abroad. Unzoned sheet dates retain their written calendar day.
+    function auditUkDayKey(value) {
+        if (value == null || value === "") return "";
+        const raw = String(value).trim();
+        const localSheetTimestamp = raw.match(/^(\d{4}-\d{2}-\d{2})(?:[ T].*)?$/);
+        const ukSheetTimestamp = raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:[ T].*)?$/);
+        if (ukSheetTimestamp) return `${ukSheetTimestamp[3]}-${ukSheetTimestamp[2].padStart(2, "0")}-${ukSheetTimestamp[1].padStart(2, "0")}`;
+        const serial = Number(raw);
+        if (raw && Number.isFinite(serial) && serial > 20000 && serial < 80000) {
+            return new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000).toISOString().slice(0, 10);
+        }
+        if (typeof value === "string" && localSheetTimestamp &&
+            !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) return localSheetTimestamp[1];
+        const parsed = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(parsed.getTime())) return localSheetTimestamp?.[1] || "";
+        const parts = Object.fromEntries(AUDIT_UK_FORMATTER.formatToParts(parsed)
+            .filter(part => ["day", "month", "year"].includes(part.type))
+            .map(part => [part.type, part.value]));
+        return `${parts.year}-${parts.month}-${parts.day}`;
+    }
+
+    function auditSubtractDays(isoDay, days) {
+        const date = new Date(`${isoDay}T12:00:00Z`);
+        date.setUTCDate(date.getUTCDate() - days);
+        return date.toISOString().slice(0, 10);
+    }
+
+    function auditDateWindow() {
+        const today = auditUkDayKey(new Date());
+        const mode = auditDateFilter.mode;
+        if (mode === "today") return { from: today, to: today, mode, label: "Today" };
+        if (mode === "yesterday") {
+            const yesterday = auditSubtractDays(today, 1);
+            return { from: yesterday, to: yesterday, mode, label: "Yesterday" };
+        }
+        if (mode === "7d" || mode === "30d") {
+            return { from: auditSubtractDays(today, mode === "7d" ? 6 : 29), to: today,
+                mode, label: mode === "7d" ? "Last 7 days" : "Last 30 days" };
+        }
+        if (mode === "all") return { from: "", to: "", mode, label: "All dates" };
+        if (mode === "day") {
+            const day = auditDateFilter.day || today;
+            return { from: day, to: day, mode, label: `Selected day · ${day}` };
+        }
+        const from = auditDateFilter.from;
+        const to = auditDateFilter.to;
+        return { from, to, mode: "custom", label: `${from || "Start"} to ${to || "End"}`,
+            error: (!from || !to) ? "Select both the start and end dates." :
+                from > to ? "The start date must not be after the end date." : "" };
+    }
+
+    function syncAuditDateControls(window = auditDateWindow()) {
+        const dayInput = $("dashboard-filter-date-audit");
+        if (dayInput) dayInput.value = auditDateFilter.mode === "day" ? auditDateFilter.day : "";
+        const range = $("audit-range-fields");
+        range?.classList.toggle("hidden", auditDateFilter.mode !== "custom");
+        ["from", "to"].forEach(boundary => {
+            const input = $("audit-range-" + boundary);
+            if (input) input.value = auditDateFilter[boundary];
+        });
+        document.querySelectorAll("button[data-audit-period]").forEach(button => {
+            const active = button.dataset.auditPeriod === auditDateFilter.mode;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+        const caption = $("audit-period-caption");
+        if (caption) caption.textContent = window.mode === "today"
+            ? "Today only · use See previous days movements in a category to view its history"
+            : `Showing ${window.label.toLowerCase()}`;
+        const error = $("audit-range-error");
+        if (error) {
+            error.textContent = window.error || "";
+            error.classList.toggle("hidden", !window.error);
+        }
+    }
+
     function renderAudit() {
-        const filteredRows = filteredDashboardTransactions();
-        const regular = filteredRows.filter(item => !FM_DASHBOARD_FEATURES.isAdjustment(item));
-        const adjustments = filteredRows.filter(item => FM_DASHBOARD_FEATURES.isAdjustment(item));
+        const filters = getDashboardFilters();
+        const window = auditDateWindow();
+        syncAuditDateControls(window);
+        // Client and asset remain linked to the dashboard; the audit day/range
+        // never modifies or inherits the dashboard-only date filter.
+        const matchingRows = getDashboardTransactions().filter(item =>
+            (!filters.client || String(item.client || "").trim() === filters.client) &&
+            (!filters.asset || String(item.asset || "").trim() === filters.asset)
+        );
+        const inWindow = item => {
+            const key = auditUkDayKey(item.timestamp);
+            return !window.error && Boolean(key) &&
+                (!window.from || key >= window.from) && (!window.to || key <= window.to);
+        };
+        const selectedRows = matchingRows.filter(inWindow);
+        const regular = matchingRows.filter(item => !FM_DASHBOARD_FEATURES.isAdjustment(item));
+        const adjustments = matchingRows.filter(item => FM_DASHBOARD_FEATURES.isAdjustment(item));
         const normalGroups = FM_TRANSACTION_DISPLAY?.groupTransactions?.(regular) || [];
         const adjustmentGroups = FM_TRANSACTION_DISPLAY?.groupTransactions?.(adjustments) || [];
         const types = state.clientTypes || { categories: [], lookup: Object.create(null) };
@@ -3980,24 +4133,50 @@ function bindQuickMenu() {
         if (unmatched.length) names.set("Uncategorised", unmatched);
         state.auditVisibleRows = [];
         const count = $("audit-count");
-        if (count) count.textContent = (normalGroups.length + adjustmentGroups.length).toLocaleString("en-GB");
+        const visibleCount = [...names.values()].flat().filter(group => inWindow(group)).length +
+            adjustmentGroups.filter(group => inWindow(group)).length;
+        if (count) count.textContent = visibleCount.toLocaleString("en-GB");
 
-        const renderBucket = (key, groups) => {
-            const max = auditLimits.get(key) || AUDIT_PAGE_SIZE;
-            const visible = groups.slice(0, max);
-            const cards = visible.map(group => {
-                const index = state.auditVisibleRows.push(group) - 1;
-                return renderTransactionCard(group, index);
-            }).join("");
-            return cards || `<div class="client-cards-empty"><span>No movements match these filters.</span></div>`;
-        };
+        const renderCards = groups => groups.map(group => {
+            const index = state.auditVisibleRows.push(group) - 1;
+            return renderTransactionCard(group, index);
+        }).join("");
+
         const renderPanel = (key, title, groups, first) => {
             const open = auditOpen.has(key) ? auditOpen.get(key) : first;
             const limit = auditLimits.get(key) || AUDIT_PAGE_SIZE;
+            const current = groups.filter(group => inWindow(group));
+            const shown = current.slice(0, limit);
+            const todayMode = window.mode === "today" && !window.error;
+            const past = todayMode ? groups.filter(group => {
+                const day = auditUkDayKey(group.timestamp);
+                return day && day < window.from;
+            }) : [];
+            const olderLimit = auditOlderLimits.get(key) || 0;
+            const shownPast = past.slice(0, olderLimit);
+            const currentLabel = todayMode ? "today" : "in period";
+            const countText = `${current.length.toLocaleString("en-GB")} ${currentLabel}`;
+            const empty = todayMode ? "No movements today" : window.error ? "Invalid date range" : "No movements in this period";
+            const cards = shown.length
+                ? `<div class="transaction-card-list">${renderCards(shown)}</div>`
+                : `<div class="audit-empty-period"><strong>${empty}</strong><span>${todayMode
+                    ? past.length ? "There are movements from previous days." : "No previous movements are recorded for this category."
+                    : "Choose another day or date range to see movements."}</span></div>`;
+            const older = shownPast.length
+                ? `<div class="audit-older-heading"><strong>Previous days</strong><span>${shownPast.length.toLocaleString("en-GB")} shown</span></div><div class="transaction-card-list">${renderCards(shownPast)}</div>` : "";
+            const moreCurrent = current.length > limit
+                ? `<button type="button" class="secondary audit-more" data-audit-more="${escapeAttr(key)}">Show more movements (${(current.length - limit).toLocaleString("en-GB")} remaining)</button>` : "";
+            // Older entries stay hidden until requested, with pagination to
+            // prevent hundreds of old cards from overwhelming mobile devices.
+            const morePast = todayMode && past.length && current.length <= limit
+                ? `<button type="button" class="secondary audit-more audit-older-button" data-audit-older="${escapeAttr(key)}">${olderLimit
+                    ? `Show more previous movements (${(past.length - shownPast.length).toLocaleString("en-GB")} remaining)`
+                    : current.length ? `Show previous days movements (${past.length.toLocaleString("en-GB")})`
+                        : `See previous days movements (${past.length.toLocaleString("en-GB")})`}</button>` : "";
+            const pastButton = shownPast.length >= past.length ? "" : morePast;
             return `<details class="audit-category" data-audit-category="${escapeAttr(key)}" ${open ? "open" : ""}>
-                <summary class="audit-category-heading"><span class="audit-category-name">${escapeHtml(title)}</span><span class="audit-category-count">${groups.length.toLocaleString("en-GB")} movements</span><span class="audit-category-chevron" aria-hidden="true"></span></summary>
-                <div class="audit-category-body"><div class="transaction-card-list">${renderBucket(key, groups)}</div>
-                ${groups.length > limit ? `<button type="button" class="secondary audit-more" data-audit-more="${escapeAttr(key)}">Show more movements (${(groups.length - limit).toLocaleString("en-GB")} remaining)</button>` : ""}</div>
+                <summary class="audit-category-heading"><span class="audit-category-name">${escapeHtml(title)}</span><span class="audit-category-count">${countText}</span><span class="audit-category-chevron" aria-hidden="true"></span></summary>
+                <div class="audit-category-body">${cards}${moreCurrent}${older}${pastButton}</div>
             </details>`;
         };
 
@@ -4006,9 +4185,8 @@ function bindQuickMenu() {
         const adjustmentBody = $("audit-adjustments-body");
         if (adjustmentBody) adjustmentBody.innerHTML = renderPanel("__adjustments__", "Normalisations & adjustments", adjustmentGroups, false);
 
-        const filters = getDashboardFilters();
-        const filtered = Boolean(filters.client || filters.date || filters.asset);
-        renderTransactionSummary($("transaction-summary"), regular, filtered ? "Filtered movement totals" : "Movement totals");
+        const selectedRegular = selectedRows.filter(item => !FM_DASHBOARD_FEATURES.isAdjustment(item));
+        renderTransactionSummary($("transaction-summary"), selectedRegular, `${window.label} movement totals`);
     }
 
     function renderTransactionCard(group, index, actionAttr = "data-info-index") {
