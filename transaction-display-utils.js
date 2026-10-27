@@ -138,11 +138,13 @@
       const registrationKey = vehicleReg
         ? vehicleReg.replace(/[^A-Z0-9]/g, "")
         : `unregistered-row:${index}`;
-      const key = `${String(client).toLowerCase()}\u0000${timeKey(item?.timestamp)}\u0000${registrationKey}`;
+      const broker = String(item?.broker || "").trim();
+      const key = `${String(client).toLowerCase()}\u0000${timeKey(item?.timestamp)}\u0000${registrationKey}\u0000${broker.toLocaleLowerCase("en-GB")}`;
       if (!groups.has(key)) {
         groups.set(key, {
           key,
           client,
+          broker,
           timestamp: item?.timestamp || "",
           items: [],
           movements: { RECEIVED: [], SENT: [], DISCARD: [], OTHER: [] },

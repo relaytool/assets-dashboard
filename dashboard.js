@@ -64,6 +64,7 @@
         alertHeaders: [],
 
         clients: [],
+        brokers: [...(window.FM_BROKERS?.DEFAULT_BROKERS || [])],
         clientListRows: [],
         clientTypes: { categories: [], lookup: Object.create(null) },
         auditVisibleRows: [],
@@ -85,6 +86,7 @@ document.addEventListener(
             addButtonId: "add-client-entry",
             selfClient: CONFIG.SELF_CLIENT_NAME || "HSC London (Self)",
             getClients: () => state.clients,
+            getBrokers: () => state.brokers,
             getAssets: () => state.inventory.map(item => item.asset),
             onChange: () => updateMovementPreview()
         });
@@ -798,7 +800,8 @@ function bindQuickMenu() {
                 CONFIG.ALERTS_SHEET_NAME,
                 CONFIG.ASSET_AVAILABILITY_SHEET_NAME,
                 CONFIG.ASSET_OPERATIONS_SHEET_NAME,
-                CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME
+                CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME,
+                CONFIG.BROKERS_SHEET_NAME
             ];
             const missingSheets = requiredSheets.filter(name => !sheetTitles.includes(name));
 
@@ -807,7 +810,7 @@ function bindQuickMenu() {
                 sheetTitles = sheetTitles.concat(missingSheets);
             }
 
-            const [inventoryRows, transactionRows, clientListRows, routineRows, alertRows, availabilityRows, operationRows, adjustmentRows, clientTypeRows] = await Promise.all([
+            const [inventoryRows, transactionRows, clientListRows, routineRows, alertRows, availabilityRows, operationRows, adjustmentRows, clientTypeRows, brokerRows] = await Promise.all([
                 getValues(ledgerId, CONFIG.INVENTORY_SHEET_NAME),
                 getValues(ledgerId, CONFIG.TRANSACTIONS_SHEET_NAME),
                 getValues(ledgerId, CONFIG.CLIENT_LIST_SHEET_NAME),
@@ -821,8 +824,17 @@ function bindQuickMenu() {
                         console.warn("Client types could not be loaded:", error);
                         return [];
                     })
-                    : Promise.resolve([])
+                    : Promise.resolve([]),
+                getValues(ledgerId, CONFIG.BROKERS_SHEET_NAME).catch(error => {
+                    console.warn("Broker reference list unavailable:", error);
+                    return [];
+                })
             ]);
+            if (brokerRows.length <= 1) {
+                try {
+                    await updateValues(ledgerId, CONFIG.BROKERS_SHEET_NAME, [["Broker"], ...FM_BROKERS.DEFAULT_BROKERS.map(name => [name])]);
+                } catch (error) { console.warn("Cannot initialise Brokers sheet:", error); }
+            }
 
             await ensureTransactionColumns(ledgerId, transactionRows);
             await ensureOperationalSheetHeaders(ledgerId, CONFIG.ROUTINE_SHEET_NAME, routineRows, FM_ROUTINE_ALERTS.ROUTINE_HEADERS);
@@ -860,6 +872,7 @@ function bindQuickMenu() {
                 })).filter(item => item.client || item.asset)
             ];
             state.clientTypes = FM_DASHBOARD_FEATURES.parseClientTypes(clientTypeRows);
+            state.brokers = FM_BROKERS.parseBrokers(brokerRows);
             state.clientListRows = clientListRows.map(row => row.slice());
             state.clients = parseClients(clientListRows);
             state.routines = FM_ROUTINE_ALERTS.parseRoutineRows(routineRows);
@@ -1178,6 +1191,9 @@ function bindQuickMenu() {
         if (names.includes(CONFIG.ASSET_OPERATIONS_SHEET_NAME)) {
             await updateValues(ledgerId, CONFIG.ASSET_OPERATIONS_SHEET_NAME, [["Timestamp", "Client", "Movement", "Asset", "Quantity", "User", "Comment", "Image Link", "Inventory Balance", "Operation ID"]]);
         }
+        if (names.includes(CONFIG.BROKERS_SHEET_NAME)) {
+            await updateValues(ledgerId, CONFIG.BROKERS_SHEET_NAME, [["Broker"], ...FM_BROKERS.DEFAULT_BROKERS.map(name => [name])]);
+        }
         if (names.includes(CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME)) {
             await updateValues(ledgerId, CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME, [["Timestamp", "Client", "Movement", "Asset", "Quantity", "User", "Comment", "Image Link", "Inventory Balance", "Target Balance", "Previous Balance", "Adjustment ID"]]);
         }
@@ -1204,7 +1220,8 @@ function bindQuickMenu() {
                         "User",
                         "Comment",
                         "Image Link",
-                        "Inventory Balance"
+                        "Inventory Balance",
+                        "Broker"
                     ]
                 ]
 
@@ -1492,7 +1509,8 @@ function bindQuickMenu() {
             user: findColumn(header, ["user", "entered by", "email"]),
             comment: findColumn(header, ["comment", "comments", "notes"]),
             image: findColumn(header, ["image link", "image", "photo", "picture", "photo link", "attachment", "drive link"]),
-            inventoryBalance: findColumn(header, ["inventory balance", "warehouse balance", "balance after movement"])
+            inventoryBalance: findColumn(header, ["inventory balance", "warehouse balance", "balance after movement"]),
+            broker: findColumn(header, ["broker", "broker name"])
         };
 
         return rows.slice(1).map(row => ({
@@ -1504,7 +1522,8 @@ function bindQuickMenu() {
             user: idx.user >= 0 ? row[idx.user] ?? "" : "",
             comment: idx.comment >= 0 ? String(row[idx.comment] ?? "").trim() : "",
             image: idx.image >= 0 ? String(row[idx.image] ?? "").trim() : "",
-            inventoryBalance: idx.inventoryBalance >= 0 ? numericValue(row[idx.inventoryBalance]) : null
+            inventoryBalance: idx.inventoryBalance >= 0 ? numericValue(row[idx.inventoryBalance]) : null,
+            broker: idx.broker >= 0 ? String(row[idx.broker] ?? "").trim() : ""
         })).filter(item => item.asset || item.client);
     }
 
@@ -1575,6 +1594,11 @@ function bindQuickMenu() {
         if (!normalized.some(h => ["inventory balance", "warehouse balance", "balance after movement"].includes(h))) {
             header.push("Inventory Balance");
             normalized.push("inventory balance");
+            changed = true;
+        }
+        if (!normalized.includes("broker")) {
+            header.push("Broker");
+            normalized.push("broker");
             changed = true;
         }
 
@@ -2537,10 +2561,18 @@ function bindQuickMenu() {
         populateDashboardFilters();
         renderWarehouseAssets();
         renderClientCards();
+        renderBrokerView();
         renderAudit();
         renderGlobalSearch();
         renderFilteredLoadTables();
         updateDashboardDataVersionStatus();
+    }
+
+    function renderBrokerView() {
+        window.FM_BROKER_VIEW?.render?.({
+            rows: getDashboardTransactions().filter(row => !row.isLedgerAdjustment && !FM_DASHBOARD_FEATURES.isAdjustment(row)),
+            brokers: state.brokers
+        });
     }
 
     function filteredDashboardTransactions() {
@@ -4210,7 +4242,7 @@ function bindQuickMenu() {
                 <div class="transaction-card-client"><img class="transaction-truck-icon" src="truck-icon.png" alt=""><div class="transaction-card-client-copy"><div class="eyebrow">${movementNames.includes("NORMALISATION") ? "CLIENT LEDGER ADJUSTMENT" : String(group.client).trim().toLowerCase() === "warehouse" ? "ASSET OPERATION" : "CLIENT MOVEMENT"}</div><h3>${escapeHtml(group.client)}</h3></div></div>
                 <time class="transaction-card-time">${escapeHtml(formatTimestamp(group.timestamp))}</time>
             </div>
-            <div class="transaction-card-meta"><span class="transaction-card-line-count">${group.totalLines} ledger line${group.totalLines === 1 ? "" : "s"}</span>${group.vehicleReg ? `<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>` : ""}${attachment ? `<span class="transaction-attachment-mark">${attachment}</span>` : ""}</div>
+            <div class="transaction-card-meta"><span class="transaction-card-line-count">${group.totalLines} ledger line${group.totalLines === 1 ? "" : "s"}</span>${group.broker ? `<span class="broker-transaction-tag">Broker · ${escapeHtml(group.broker)}</span>` : ""}${group.vehicleReg ? `<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>` : ""}${attachment ? `<span class="transaction-attachment-mark">${attachment}</span>` : ""}</div>
             ${lines}
             <div class="transaction-card-footer"><span class="muted">${group.totalQuantity.toLocaleString("en-GB")} total quantity</span><button type="button" class="secondary" ${actionAttr}="${index}">View details</button></div>
         </article>`;
@@ -4227,7 +4259,7 @@ function bindQuickMenu() {
         if (!summary) return;
         const sections = FM_TRANSACTION_DISPLAY.movementSections(group);
         const comments = Array.isArray(group.comments) && group.comments.length ? group.comments : (group.comment ? [group.comment] : []);
-        summary.innerHTML = `<div class="transaction-detail-note"><strong>${escapeHtml(group.client)}</strong><span> · ${escapeHtml(formatTimestamp(group.timestamp))}</span>${group.vehicleReg ? `<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>` : ""}</div>${sections.map(section => {
+        summary.innerHTML = `<div class="transaction-detail-note"><strong>${escapeHtml(group.client)}</strong>${group.broker ? `<span> · Broker: ${escapeHtml(group.broker)}</span>` : ""}<span> · ${escapeHtml(formatTimestamp(group.timestamp))}</span>${group.vehicleReg ? `<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>` : ""}</div>${sections.map(section => {
             const label = FM_TRANSACTION_DISPLAY.movementLabel(section.movement);
             const cls = section.movement === "RECEIVED" ? "received" : section.movement === "SENT" ? "sent" : section.movement === "DISCARD" ? "discard" : "other";
             const assets = FM_TRANSACTION_DISPLAY.aggregateAssets(section.items);
@@ -5146,7 +5178,7 @@ function bindQuickMenu() {
                 const next = entry.movement === "RECEIVED" ? current + assetEntry.quantity : current - assetEntry.quantity;
                 if (entry.movement !== "RECEIVED" && next < 0) { setMovementStatus(`Cannot remove ${assetEntry.quantity} ${item.asset}. Current balance is ${formatNumber(current)}.`, true); return; }
                 balances.set(key, next);
-                prepared.push({ client, movement: entry.movement, asset: item.asset, quantity: assetEntry.quantity });
+                prepared.push({ client, broker: entry.movement === "DISCARD" ? "" : (entry.broker || ""), movement: entry.movement, asset: item.asset, quantity: assetEntry.quantity });
             }
         }
 
@@ -5205,6 +5237,7 @@ function bindQuickMenu() {
                 movements: livePrepared.map(item => ({
                     timestamp,
                     client: item.client,
+                    broker: item.broker || "",
                     movement: item.movement,
                     asset: item.asset,
                     quantity: item.quantity,

@@ -1,0 +1,100 @@
+/* Broker workspace and consistent professional chart design. */
+.broker-section { margin-top:20px; overflow:hidden; }
+.broker-section-head { display:flex; justify-content:space-between; flex-wrap:wrap; gap:15px; align-items:flex-start; }
+.broker-section-head .muted {max-width:650px;margin-top:7px;}
+.broker-scope-pill {display:inline-flex;align-items:center;gap:8px;border:1px solid #d8e3f4;background:#f3f7ff;color:#244a84;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:750;}
+.broker-scope-pill::before {content:"";width:7px;height:7px;background:#407dec;border-radius:50%;}
+.broker-filter-bar {display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(125px,.7fr) auto;gap:11px;align-items:end;margin:17px 0;}
+.broker-filter-bar label,.broker-date-fields label {font-size:12px;color:#526176;font-weight:740;display:flex;min-width:0;flex-direction:column;gap:6px;}
+.broker-filter-bar select,.broker-date-fields input {min-width:0;max-width:100%;width:100%;height:44px;background:#fff;border:1px solid #d6e0ed;border-radius:11px;color:#182436;padding:0 11px;font-size:14px;font-weight:600;line-height:1.2;}
+.broker-filter-bar select:focus,.broker-date-fields input:focus {outline:3px solid #b2cffb;outline-offset:1px;}
+#broker-reset {height:44px;min-width:80px;}
+.broker-date-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:-4px 0 18px;}
+.broker-cards {display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:11px;padding:5px 1px 17px;}
+.broker-card {display:flex;text-align:left;flex-direction:column;gap:10px;min-width:0;padding:17px 15px;border:1px solid #e0e7f1;border-radius:17px;background:linear-gradient(158deg,#fff 42%,#f8faff 100%);color:#18263a;box-shadow:0 4px 18px rgba(22,40,71,.036);transition:border-color .15s,transform .15s,box-shadow .15s;}
+.broker-card:hover {border-color:#94b7f4;transform:translateY(-2px);box-shadow:0 12px 25px rgba(27,49,92,.085);}
+.broker-card.is-selected {border-color:#3b75ec;background:linear-gradient(153deg,#ffffff,#eef5ff);box-shadow:0 0 0 2px rgba(59,117,236,.09),0 9px 20px rgba(38,89,175,.1);}
+.broker-card:focus-visible {outline:3px solid #7da7fb;outline-offset:2px;}
+.broker-card-top,.broker-card-metrics {display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.broker-card-monogram {display:inline-flex;width:34px;height:34px;border-radius:11px;align-items:center;justify-content:center;color:#315ec2;background:#eaf1ff;font-weight:850;font-size:12px;}
+.broker-card-indicator {width:9px;height:9px;border:2px solid #dce4ef;border-radius:50%;}
+.broker-card.is-selected .broker-card-indicator {background:#367bea;border-color:#367bea;box-shadow:0 0 0 3px #e2efff;}
+.broker-card>strong {line-height:1.25;font-size:14px;overflow-wrap:anywhere;}
+.broker-card-metrics {justify-content:flex-start;gap:16px;font-size:11px;color:#65748a;}
+.broker-card-metrics span {display:flex;gap:4px;align-items:baseline;}
+.broker-card-metrics b {font-size:17px;color:#192c47;}
+.broker-card-foot {color:#6e7c91;font-size:11px;border-top:1px solid #e9eef5;padding-top:10px;width:100%;margin-top:auto;}
+.broker-details {border:1px solid #e0e7f1;border-radius:16px;overflow:hidden;background:#fff;}
+.broker-empty {display:flex;min-height:155px;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;padding:22px;color:#64748b;}
+.broker-empty strong {color:#1c2e46;font-size:15px;}
+.broker-empty span {font-size:13px;line-height:1.5;max-width:420px;}
+.broker-empty-icon {font-size:27px;color:#5181d7;}
+.broker-details-top {display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:21px 21px 13px;}
+.broker-details-top h3 {margin:4px 0 6px;font-size:19px;color:#172940;}
+.broker-details-top p {font-size:12px;color:#6b778b;line-height:1.5;margin:0;}
+.broker-details-lines {white-space:nowrap;background:#f1f5fb;border-radius:99px;padding:7px 11px;font-size:12px;color:#527098;font-weight:750;}
+.broker-table-scroll {width:100%;overflow-x:auto;}
+.broker-table {width:100%;min-width:520px;border-collapse:collapse;font-size:13px;}
+.broker-table th {text-transform:uppercase;letter-spacing:.06em;font-size:10px;background:#f6f8fc;color:#66778e;padding:13px 19px;text-align:left;border-bottom:1px solid #e5eaf2;}
+.broker-table td {padding:13px 19px;border-bottom:1px solid #edf1f5;color:#3d4e63;}
+.broker-table td:first-child strong {color:#1c2e46;}
+.broker-table th.num,.broker-table td.num {text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.broker-net {font-weight:800;color:#536479;}.broker-net-positive {color:#1e679e;}.broker-net-negative {color:#bc5b43;}
+.broker-empty-table {text-align:center;padding:25px!important;color:#8492a6!important;}
+.broker-analysis {display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:15px;margin-top:15px;}
+.broker-analysis>section {border:1px solid #e0e7f1;border-radius:16px;min-width:0;background:#fff;overflow:hidden;}
+.broker-analysis-head {padding:17px 17px 11px;display:flex;align-items:flex-start;justify-content:space-between;gap:9px;flex-wrap:wrap;}
+.broker-analysis-head h3 {margin:4px 0;font-size:16px;color:#1e314d;}
+.broker-chart-empty,.broker-history-empty {color:#6e7d90;font-size:13px;text-align:center;padding:34px 17px;}
+.broker-chart-key {display:flex;gap:18px;padding:0 19px 12px;font-size:11px;font-weight:700;color:#63738b;}
+.broker-chart-key span {display:inline-flex;align-items:center;gap:7px;}
+.broker-chart-key i {width:8px;height:8px;border-radius:50%;display:block;}.broker-chart-key .sent {background:#4178ec;}.broker-chart-key .received {background:#17a38a;}
+.broker-chart-scroll {overflow:auto hidden;max-width:100%;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.broker-chart-scroll svg {display:block;width:100%;height:auto;max-height:255px;}
+.broker-chart-grid {stroke:#e9edf4;stroke-dasharray:4 4;stroke-width:1;}.broker-chart-axis {font:11px system-ui,sans-serif;fill:#8490a2;}
+.broker-chart-sent,.broker-chart-received {fill:none;stroke-width:3;stroke-linejoin:round;stroke-linecap:round;}
+.broker-chart-sent {stroke:#4377ef;}.broker-chart-received {stroke:#16a48c;}
+.broker-chart-dot {stroke:white;stroke-width:2;}.broker-chart-dot.sent{fill:#4377ef;}.broker-chart-dot.received{fill:#16a48c;}
+.broker-chart-switch {display:inline-flex;gap:2px;background:#f0f4fa;border:1px solid #e1e9f2;border-radius:10px;padding:3px;}
+.broker-chart-switch button {border:0;border-radius:7px;background:transparent;min-width:37px;min-height:31px;padding:6px 7px;font-weight:800;font-size:11px;color:#66768a;}
+.broker-chart-switch button.is-active {color:#1d4a95;background:#fff;box-shadow:0 1px 5px #20385518;}
+.broker-history {max-height:330px;overflow-y:auto;}
+.broker-history-row {display:grid;grid-template-columns:78px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:12px 15px;border-top:1px solid #edf1f5;font-size:12px;}
+.broker-history-date {color:#758299;font-size:11px;white-space:nowrap;}
+.broker-history-row strong {color:#29405c;}.broker-history-row small {display:block;color:#7c899a;margin-top:3px;overflow-wrap:anywhere;}
+.broker-history-qty {font-variant-numeric:tabular-nums;}.broker-direction {border-radius:7px;padding:5px 7px;font-size:10px;font-weight:750;white-space:nowrap;}
+.broker-direction.out {background:#eaf1ff;color:#2b66c3;}.broker-direction.in {background:#e7f6f2;color:#107963;}
+.broker-history-more {margin:12px;min-height:38px;}
+.broker-transaction-tag {display:inline-flex;align-items:center;border-radius:7px;padding:5px 8px;background:#edf3ff;color:#2f61ac;font-weight:750;font-size:11px;max-width:100%;overflow-wrap:anywhere;}
+.broker-optional {font-size:10px;font-weight:700;color:#728298;display:inline;}
+/* Existing dashboard graphs receive the same refined design language. */
+.client-graph-scroll,.asset-history-graph .client-graph-scroll {border:1px solid #edf1f6;border-radius:13px;background:linear-gradient(180deg,#fff 0%,#fbfcff 100%)!important;}
+.client-graph-svg .graph-grid {stroke:#e9eef5;stroke-dasharray:4 5;stroke-width:1;}
+.client-graph-svg .graph-axis {stroke:#d6e1ee;stroke-width:1;}
+.client-graph-svg .graph-y-label,.client-graph-svg .graph-x-label {fill:#8491a5;font-size:11px;}
+.client-graph-svg .graph-line {stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 3px 3px rgba(22,46,77,.08));}
+.client-graph-svg .graph-point-sent,.client-graph-svg .graph-point-received {stroke:#fff;stroke-width:2.1;}
+.client-graph-legend {font-weight:700;color:#617086;letter-spacing:.01em;}
+.graph-range-switch {box-shadow:inset 0 1px 2px #283e5e0a;}
+.graph-range-switch .graph-range-button.is-active {color:#2055ac!important;border-color:#cfdcf3!important;}
+@media(max-width:900px){.broker-filter-bar {grid-template-columns:repeat(2,minmax(0,1fr));}.broker-analysis {grid-template-columns:1fr;}}
+@media(max-width:540px){
+  .broker-section {padding:15px 12px!important;}
+  .broker-section-head {gap:9px;}.broker-section-head h2 {font-size:21px;}
+  .broker-filter-bar {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .broker-filter-bar label:first-child {grid-column:1/-1;}
+  .broker-filter-bar select,.broker-date-fields input {min-width:0;font-size:16px;height:44px;}
+  #broker-reset {width:100%;}
+  .broker-cards {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  .broker-card {padding:13px 11px;gap:8px;border-radius:14px;}
+  .broker-card>strong {font-size:12px;}.broker-card-metrics {gap:7px;flex-direction:column;align-items:flex-start;}
+  .broker-card-metrics b {font-size:15px;}.broker-card-foot {font-size:10px;}
+  .broker-details-top {padding:15px;}.broker-details-top h3 {font-size:16px;}
+  .broker-details-lines {font-size:11px;}
+  .broker-history-row {grid-template-columns:61px minmax(0,1fr) auto auto;gap:6px;padding:10px 9px;}
+  .broker-history-date {font-size:10px;}.broker-direction {font-size:9px;padding:4px 5px;}
+  .broker-analysis-head {padding:12px;}
+  .broker-table th,.broker-table td {padding:11px 10px;}
+}
+
+@media (max-width:760px){#movement-form .batch-entry-fields>.batch-broker, #movement-form .batch-entry-fields>label:has(>.batch-broker){grid-column:1 / -1;}}

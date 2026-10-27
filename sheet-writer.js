@@ -4,6 +4,7 @@
   const SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets";
   const LEGACY_CHANGE_LOG_SHEET = "Inventory Change Log";
   const TRANSACTION_BALANCE_HEADER = "Inventory Balance";
+  const BROKER_HEADER = "Broker";
 
   function normalizeHeader(value) {
     return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -176,10 +177,16 @@
       "Timestamp", "Client", "Movement", "Asset", "Quantity", "User", "Comment", "Image Link"
     ];
     const normalized = header.map(normalizeHeader);
+    let changed = false;
     if (!normalized.includes("inventory balance")) {
       header.push(TRANSACTION_BALANCE_HEADER);
-      await sheetsPut(spreadsheetId, `${quoteSheetName(CONFIG.TRANSACTIONS_SHEET_NAME)}!A1`, [header], accessToken);
+      changed = true;
     }
+    if (!normalized.includes("broker")) {
+      header.push(BROKER_HEADER);
+      changed = true;
+    }
+    if (changed) await sheetsPut(spreadsheetId, `${quoteSheetName(CONFIG.TRANSACTIONS_SHEET_NAME)}!A1`, [header], accessToken);
     return header;
   }
 
@@ -200,6 +207,7 @@
     put(["comment", "comments", "notes"], movement.comment);
     put(["image link", "image", "photo", "picture", "photo link", "attachment", "drive link"], movement.image);
     put(["inventory balance", "warehouse balance", "balance after movement"], inventoryBalance);
+    put(["broker", "broker name"], movement.broker || "");
     return row;
   }
 
@@ -249,6 +257,7 @@
       rows.push(buildTransactionRow(transactionHeader, {
         timestamp: movement.timestamp || timestamp || new Date().toISOString(),
         client: movement.client,
+        broker: movement.broker || "",
         movement: String(movement.movement || "").toUpperCase(),
         asset: item.asset,
         quantity,

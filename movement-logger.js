@@ -6,7 +6,7 @@
   const DRIVE_UPLOAD_API="https://www.googleapis.com/upload/drive/v3/files";
   const SELF_CLIENT=CONFIG.SELF_CLIENT_NAME||"HSC London (Self)";
   const SESSION_KEY="fmAssetSession";
-  const state={idTokenPayload:null,accessToken:null,workbookId:null,workbookName:null,inventory:[],transactions:[],clients:[],transactionIdx:null,transactionHeaderLength:6,driveFolderCache:{},auditVisibleRows:[]};
+  const state={idTokenPayload:null,accessToken:null,workbookId:null,workbookName:null,inventory:[],transactions:[],clients:[],brokers:[...(window.FM_BROKERS?.DEFAULT_BROKERS||[])],transactionIdx:null,transactionHeaderLength:6,driveFolderCache:{},auditVisibleRows:[]};
   let pendingMovement=null;
   let movementSubmitBusy=false;
   let batchForm=null;
@@ -22,6 +22,7 @@
       addButtonId:"add-client-entry",
       selfClient:SELF_CLIENT,
       getClients:()=>state.clients,
+      getBrokers:()=>state.brokers,
       getAssets:()=>state.inventory.map(item=>String(item?.asset??"").trim()).filter(Boolean),
       onChange:()=>updatePreview()
     });
@@ -251,17 +252,24 @@
         throw new Error(`The "${CONFIG.CLIENT_LIST_SHEET_NAME}" sheet is missing from "${CONFIG.INVENTORY_LEDGER_NAME}".`);
       }
       if(!titles.includes(CONFIG.ROUTINE_SHEET_NAME))missing.push(CONFIG.ROUTINE_SHEET_NAME);
+      if(!titles.includes(CONFIG.BROKERS_SHEET_NAME))missing.push(CONFIG.BROKERS_SHEET_NAME);
       if(!titles.includes(CONFIG.ALERTS_SHEET_NAME))missing.push(CONFIG.ALERTS_SHEET_NAME);
       if(missing.length)await createSheets(missing);
 
-      const [inventoryRows,transactionRows,clientRows,operationRows,adjustmentRows]=await Promise.all([
+      const [inventoryRows,transactionRows,clientRows,operationRows,adjustmentRows,brokerRows]=await Promise.all([
         getValues(ledgerId,CONFIG.INVENTORY_SHEET_NAME),
         getValues(ledgerId,CONFIG.TRANSACTIONS_SHEET_NAME),
         getValues(ledgerId,CONFIG.CLIENT_LIST_SHEET_NAME),
         titles.includes(CONFIG.ASSET_OPERATIONS_SHEET_NAME)?getValues(ledgerId,CONFIG.ASSET_OPERATIONS_SHEET_NAME):Promise.resolve([]),
-        titles.includes(CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME)?getValues(ledgerId,CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME):Promise.resolve([])
+        titles.includes(CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME)?getValues(ledgerId,CONFIG.CLIENT_LEDGER_ADJUSTMENTS_SHEET_NAME):Promise.resolve([]),
+        getValues(ledgerId,CONFIG.BROKERS_SHEET_NAME).catch(()=>[])
       ]);
 
+      if(brokerRows.length <= 1){
+        try{await updateValues(ledgerId,CONFIG.BROKERS_SHEET_NAME,[["Broker"],...FM_BROKERS.DEFAULT_BROKERS.map(name=>[name])]);}
+        catch(error){console.warn("Cannot initialise broker list:",error);}
+      }
+      state.brokers=FM_BROKERS.parseBrokers(brokerRows);
       const columns=await ensureTransactionColumns(ledgerId,transactionRows);
       state.transactionIdx=columns.idx;
       state.transactionHeaderLength=columns.length;
@@ -277,8 +285,8 @@
       }
       state.transactions=[
         ...parseTransactions(transactionRows,columns.idx),
-        ...parseTransactions(operationRows,columns.idx),
-        ...parseTransactions(adjustmentRows,columns.idx)
+        ...parseTransactions(operationRows),
+        ...parseTransactions(adjustmentRows)
       ];
       state.clients=parseClients(clientRows);
 
@@ -293,7 +301,7 @@
     }
   }
 
-  async function createSheets(names){const ledgerId=CONFIG.INVENTORY_LEDGER_SHEET_ID;await sheetsPost(`/${encodeURIComponent(ledgerId)}:batchUpdate`,{requests:names.map(title=>({addSheet:{properties:{title}}}))});if(names.includes(CONFIG.INVENTORY_SHEET_NAME))await updateValues(ledgerId,CONFIG.INVENTORY_SHEET_NAME,[["Asset","Balance"]]);if(names.includes(CONFIG.TRANSACTIONS_SHEET_NAME))await updateValues(ledgerId,CONFIG.TRANSACTIONS_SHEET_NAME,[["Timestamp","Client","Movement","Asset","Quantity","User","Comment","Image Link","Inventory Balance"]]);if(names.includes(CONFIG.ROUTINE_SHEET_NAME))await updateValues(ledgerId,CONFIG.ROUTINE_SHEET_NAME,[["Routine ID","Active","Frequency","Weekday","Direction","Client","Asset","Quantity","Destination","Planned Time","Notes","Created By","Created At"]]);if(names.includes(CONFIG.ALERTS_SHEET_NAME))await updateValues(ledgerId,CONFIG.ALERTS_SHEET_NAME,[["Alert Key","Created At","Alert Type","Status","Client","Asset","Required Qty","Available Qty","Shortfall","Destination","Message","Attended At","Attended By","Resolution Comment","Routine Key"]]);}
+  async function createSheets(names){const ledgerId=CONFIG.INVENTORY_LEDGER_SHEET_ID;await sheetsPost(`/${encodeURIComponent(ledgerId)}:batchUpdate`,{requests:names.map(title=>({addSheet:{properties:{title}}}))});if(names.includes(CONFIG.INVENTORY_SHEET_NAME))await updateValues(ledgerId,CONFIG.INVENTORY_SHEET_NAME,[["Asset","Balance"]]);if(names.includes(CONFIG.TRANSACTIONS_SHEET_NAME))await updateValues(ledgerId,CONFIG.TRANSACTIONS_SHEET_NAME,[["Timestamp","Client","Movement","Asset","Quantity","User","Comment","Image Link","Inventory Balance","Broker"]]);if(names.includes(CONFIG.BROKERS_SHEET_NAME))await updateValues(ledgerId,CONFIG.BROKERS_SHEET_NAME,[["Broker"],...FM_BROKERS.DEFAULT_BROKERS.map(name=>[name])]);if(names.includes(CONFIG.ROUTINE_SHEET_NAME))await updateValues(ledgerId,CONFIG.ROUTINE_SHEET_NAME,[["Routine ID","Active","Frequency","Weekday","Direction","Client","Asset","Quantity","Destination","Planned Time","Notes","Created By","Created At"]]);if(names.includes(CONFIG.ALERTS_SHEET_NAME))await updateValues(ledgerId,CONFIG.ALERTS_SHEET_NAME,[["Alert Key","Created At","Alert Type","Status","Client","Asset","Required Qty","Available Qty","Shortfall","Destination","Message","Attended At","Attended By","Resolution Comment","Routine Key"]]);}
   async function getValues(spreadsheetId,sheetName){const data=await sheetsGet(`/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(quoteSheetName(sheetName)+"!A:AE")}`);return data.values||[];}
   async function updateValues(spreadsheetId,sheetName,rows){const range=`${quoteSheetName(sheetName)}!A1`;return sheetsPut(`/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,{range,majorDimension:"ROWS",values:rows});}
 
@@ -307,6 +315,7 @@
     if(!norm.some(h=>["comment","comments","notes"].includes(h))){header.push("Comment");norm.push("comment");changed=true;}
     if(!norm.some(h=>["image link","image","photo","picture","photo link","attachment","drive link"].includes(h))){header.push("Image Link");norm.push("image link");changed=true;}
     if(!norm.some(h=>["inventory balance","warehouse balance","balance after movement"].includes(h))){header.push("Inventory Balance");norm.push("inventory balance");changed=true;}
+    if(!norm.includes("broker")){header.push("Broker");norm.push("broker");changed=true;}
     if(changed){
       const range=`${quoteSheetName(CONFIG.TRANSACTIONS_SHEET_NAME)}!A1`;
       await sheetsPut(`/${encodeURIComponent(ledgerId)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,{range,majorDimension:"ROWS",values:[header]});
@@ -321,13 +330,19 @@
       user:findColumn(norm,["user","entered by","email"]),
       comment:findColumn(norm,["comment","comments","notes"]),
       image:findColumn(norm,["image link","image","photo","picture","photo link","attachment","drive link"]),
-      inventoryBalance:findColumn(norm,["inventory balance","warehouse balance","balance after movement"])
+      inventoryBalance:findColumn(norm,["inventory balance","warehouse balance","balance after movement"]),
+      broker:findColumn(norm,["broker","broker name"])
     };
     return {idx,length:header.length};
   }
 
   function parseInventory(rows){if(!rows.length)return[];const header=rows[0].map(normalizeHeader);const assetIdx=findColumn(header,["asset","asset name","item","type"]);const balanceIdx=findColumn(header,["balance","current balance","stock","quantity"]);if(assetIdx<0)return[];return rows.slice(1).map((row,index)=>({rowNumber:index+2,asset:String(row?.[assetIdx]??"").trim(),balance:balanceIdx>=0?numericValue(row?.[balanceIdx]):0,assetColumn:assetIdx+1,balanceColumn:balanceIdx>=0?balanceIdx+1:2})).filter(x=>String(x?.asset??"").trim());}
-  function parseTransactions(rows,idx){if(!rows.length)return[];return rows.slice(1).map(row=>({timestamp:idx.timestamp>=0?row[idx.timestamp]??"":"",client:idx.client>=0?row[idx.client]??"":"",movement:idx.movement>=0?row[idx.movement]??"":"",asset:idx.asset>=0?row[idx.asset]??"":"",quantity:idx.quantity>=0?numericValue(row[idx.quantity]):0,user:idx.user>=0?row[idx.user]??"":"",comment:idx.comment>=0?String(row[idx.comment]??"").trim():"",image:idx.image>=0?String(row[idx.image]??"").trim():"",inventoryBalance:idx.inventoryBalance>=0?numericValue(row[idx.inventoryBalance]):null})).filter(x=>x.asset||x.client);}
+  function parseTransactions(rows,idx){if(!rows.length)return[];
+    if(!idx){
+      const norm=rows[0].map(normalizeHeader);
+      idx={timestamp:findColumn(norm,["timestamp","date","datetime"]),client:findColumn(norm,["client","client name"]),movement:findColumn(norm,["movement","type","direction"]),asset:findColumn(norm,["asset","asset name","item"]),quantity:findColumn(norm,["quantity","qty"]),user:findColumn(norm,["user","entered by","email"]),comment:findColumn(norm,["comment","comments","notes"]),image:findColumn(norm,["image link","image","photo","picture","photo link","attachment","drive link"]),inventoryBalance:findColumn(norm,["inventory balance","warehouse balance","balance after movement"]),broker:findColumn(norm,["broker","broker name"])};
+    }
+    return rows.slice(1).map(row=>({timestamp:idx.timestamp>=0?(row[idx.timestamp]||row[0]||""):(row[0]||""),client:idx.client>=0?row[idx.client]??"":"",movement:idx.movement>=0?row[idx.movement]??"":"",asset:idx.asset>=0?row[idx.asset]??"":"",quantity:idx.quantity>=0?numericValue(row[idx.quantity]):0,user:idx.user>=0?row[idx.user]??"":"",comment:idx.comment>=0?String(row[idx.comment]??"").trim():"",image:idx.image>=0?String(row[idx.image]??"").trim():"",inventoryBalance:idx.inventoryBalance>=0?numericValue(row[idx.inventoryBalance]):null,broker:idx.broker>=0?String(row[idx.broker]??"").trim():""})).filter(x=>x.asset||x.client);}
   function parseClients(rows){if(!rows.length)return[];const header=rows[0].map(normalizeHeader);const idx=findColumn(header,["client","client name","name"]);if(idx<0)return rows.flat().map(x=>String(x).trim()).filter(Boolean).slice(1);return[...new Set(rows.slice(1).map(r=>String(r[idx]??"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
 
   // ---- Photo attachment (optional) ----
@@ -389,7 +404,7 @@
       <div class="transaction-card-accent" aria-hidden="true"></div>
       <div class="transaction-card-top">
         <div class="transaction-card-icon-wrap"><img class="transaction-card-icon" src="truck-icon.png" alt="" aria-hidden="true"></div>
-        <div class="transaction-card-heading"><div class="transaction-card-client">${escapeHtml(group.client||"Unknown client")}</div><div class="transaction-card-meta"><span>${escapeHtml(formatTimestamp(group.timestamp))}</span><span>•</span><span>${escapeHtml(labels||"Movement")}</span>${group.vehicleReg?`<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>`:""}</div></div>
+        <div class="transaction-card-heading"><div class="transaction-card-client">${escapeHtml(group.client||"Unknown client")}</div><div class="transaction-card-meta"><span>${escapeHtml(formatTimestamp(group.timestamp))}</span><span>•</span><span>${escapeHtml(labels||"Movement")}</span>${group.broker?`<span class="broker-transaction-tag">Broker: ${escapeHtml(group.broker)}</span>`:""}${group.vehicleReg?`<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>`:""}</div></div>
         <button type="button" class="secondary info-button transaction-card-view" data-info-index="${index}" aria-label="View details for ${escapeAttr(group.client||"movement")}">View details</button>
       </div>
       <div class="transaction-card-body">${sectionMarkup}</div>
@@ -420,7 +435,7 @@
     const comments=Array.isArray(group.comments)&&group.comments.length?group.comments:(group.comment?[group.comment]:[]);
     if(summary){
       const sections=FM_TRANSACTION_DISPLAY.movementSections(group);
-      summary.innerHTML=`<div class="transaction-detail-note"><strong>${escapeHtml(group.client||"Unknown client")}</strong><span> · ${escapeHtml(formatTimestamp(group.timestamp)||"Unknown time")}</span><span> · ${escapeHtml(FM_TRANSACTION_DISPLAY.movementLabels(group).join(" + ")||"Movement")}</span>${group.vehicleReg?`<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>`:""}</div>${sections.map(section=>`<div class="transaction-detail-section"><div class="transaction-detail-section-head"><span class="movement-tag ${lowerText(section.movement)}">${escapeHtml(section.label)}</span><strong>${formatNumber(section.totalQuantity)}</strong></div><div class="transaction-detail-assets">${section.items.map(item=>`<span>${escapeHtml(item.asset)} <strong>${formatNumber(item.quantity)}</strong></span>`).join("")}</div></div>`).join("")}`;
+      summary.innerHTML=`<div class="transaction-detail-note"><strong>${escapeHtml(group.client||"Unknown client")}</strong>${group.broker?`<span> · Broker: ${escapeHtml(group.broker)}</span>`:""}<span> · ${escapeHtml(formatTimestamp(group.timestamp)||"Unknown time")}</span><span> · ${escapeHtml(FM_TRANSACTION_DISPLAY.movementLabels(group).join(" + ")||"Movement")}</span>${group.vehicleReg?`<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>`:""}</div>${sections.map(section=>`<div class="transaction-detail-section"><div class="transaction-detail-section-head"><span class="movement-tag ${lowerText(section.movement)}">${escapeHtml(section.label)}</span><strong>${formatNumber(section.totalQuantity)}</strong></div><div class="transaction-detail-assets">${section.items.map(item=>`<span>${escapeHtml(item.asset)} <strong>${formatNumber(item.quantity)}</strong></span>`).join("")}</div></div>`).join("")}`;
     }
     const photoWrap=$("info-photo-wrap");const commentEl=$("info-comment");const emptyEl=$("info-empty");
     if(group.image){
@@ -459,7 +474,7 @@
         const next=movement==="RECEIVED"?current+itemEntry.quantity:current-itemEntry.quantity;
         if(next<0){setMovementStatus(`Cannot remove ${formatNumber(itemEntry.quantity)} ${item.asset}. Current balance is ${formatNumber(current)}.`,true);return;}
         balances.set(key,next);
-        prepared.push({client,movement,asset:item.asset,quantity:itemEntry.quantity});
+        prepared.push({client,broker:movement==="DISCARD"?"":(entry.broker||""),movement,asset:item.asset,quantity:itemEntry.quantity});
       }
     }
     pendingMovement={...data,prepared,balances};
@@ -472,7 +487,7 @@
       const client=entry.movement==="DISCARD"?SELF_CLIENT:entry.client;
       const movement=movementLabel(entry.movement);
       const total=entry.items.reduce((sum,item)=>sum+item.quantity,0);
-      return `<div class="confirm-batch-client"><div class="confirm-batch-heading"><strong>${escapeHtml(client)}</strong><span class="movement-tag ${movementClass(entry.movement)}">${escapeHtml(movement)}</span><strong>${formatNumber(total)}</strong></div><div class="confirm-batch-assets">${entry.items.map(item=>`<span>${escapeHtml(item.asset)} <strong>${formatNumber(item.quantity)}</strong></span>`).join("")}</div></div>`;
+      return `<div class="confirm-batch-client"><div class="confirm-batch-heading"><strong>${escapeHtml(client)}</strong>${entry.broker?`<span class="broker-transaction-tag">Broker: ${escapeHtml(entry.broker)}</span>`:""}<span class="movement-tag ${movementClass(entry.movement)}">${escapeHtml(movement)}</span><strong>${formatNumber(total)}</strong></div><div class="confirm-batch-assets">${entry.items.map(item=>`<span>${escapeHtml(item.asset)} <strong>${formatNumber(item.quantity)}</strong></span>`).join("")}</div></div>`;
     }).join("");
     $("confirm-total").textContent=formatNumber(prepared.reduce((sum,item)=>sum+item.quantity,0));
     const attachment=$("confirm-attachment");const photoWrap=$("confirm-photo-wrap");const commentEl=$("confirm-comment");let showAttachment=false;
@@ -519,6 +534,7 @@
         movements:data.prepared.map(movement=>({
           timestamp,
           client:movement.client,
+          broker:movement.broker||"",
           movement:movement.movement,
           asset:movement.asset,
           quantity:movement.quantity,

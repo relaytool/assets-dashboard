@@ -31,6 +31,7 @@
 
     const getClients = typeof options.getClients === "function" ? options.getClients : () => [];
     const getAssets = typeof options.getAssets === "function" ? options.getAssets : () => [];
+    const getBrokers = typeof options.getBrokers === "function" ? options.getBrokers : () => (window.FM_BROKERS?.DEFAULT_BROKERS || []);
     const selfClient = options.selfClient || "HSC London (Self)";
     const onChange = typeof options.onChange === "function" ? options.onChange : () => {};
     const onRemoveEntry = typeof options.onRemoveEntry === "function" ? options.onRemoveEntry : () => {};
@@ -47,6 +48,11 @@
       let html = `<option value="">Select client</option>${clients.map(client => `<option value="${escapeHtml(client)}">${escapeHtml(client)}</option>`).join("")}`;
       if (movement === "DISCARD") html = `<option value="${escapeHtml(selfClient)}">${escapeHtml(selfClient)}</option>` + html;
       return html;
+    }
+
+    function brokerOptions() {
+      const brokers = window.FM_BROKERS?.parseBrokers?.((getBrokers() || []).map(broker => [broker])) || getBrokers();
+      return `<option value="">No broker</option>` + brokers.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
     }
 
     function assetOptions(selected = "") {
@@ -99,6 +105,14 @@
       clientSelect.innerHTML = clientOptions(movement);
       clientSelect.value = selectedClient;
 
+      const brokerSelect = card.querySelector(".batch-broker");
+      if (brokerSelect) {
+        const selectedBroker = brokerSelect.value;
+        brokerSelect.innerHTML = brokerOptions();
+        brokerSelect.value = selectedBroker;
+        if (movement === "DISCARD") brokerSelect.value = "";
+        brokerSelect.disabled = movement === "DISCARD";
+      }
       if (movement === "DISCARD") {
         clientSelect.value = selfClient;
         clientSelect.disabled = true;
@@ -153,6 +167,9 @@
             <select class="batch-client" required>${clientOptions(data.movement || "")}</select>
             <span class="batch-client-help field-help"></span>
           </label>
+          <label>Broker <span class="broker-optional">Optional</span>
+            <select class="batch-broker">${brokerOptions()}</select>
+          </label>
         </div>
         <div class="movement-mode-strip batch-mode-strip">Select a movement to set this entry.</div>
         <div class="batch-assets-section">
@@ -168,6 +185,7 @@
       container.appendChild(card);
       const initialClient = card.querySelector(".batch-client");
       if (initialClient) initialClient.value = data.client || "";
+      if (card.querySelector(".batch-broker")) card.querySelector(".batch-broker").value = data.broker || "";
       (data.items?.length ? data.items : [{}]).forEach((item) => addAssetRow(card, item, false));
       syncCard(card);
       updateEntryNumbers();
@@ -181,6 +199,7 @@
       if (cards.length === 1) {
         card.querySelector(".batch-movement").value = "";
         card.querySelector(".batch-client").value = "";
+        card.querySelector(".batch-broker").value = "";
         card.querySelector(".batch-asset-rows").innerHTML = "";
         addAssetRow(card, {}, false);
         syncCard(card);
@@ -223,7 +242,7 @@
     container.addEventListener("change", event => {
       const card = event.target.closest(".movement-entry-card");
       if (!card) return;
-      if (event.target.matches(".batch-movement,.batch-client,.batch-asset-select")) syncCard(card);
+      if (event.target.matches(".batch-movement,.batch-client,.batch-asset-select,.batch-broker")) syncCard(card);
       onChange();
     });
     container.addEventListener("input", event => {
@@ -241,6 +260,7 @@
       return [...container.querySelectorAll(".movement-entry-card")].map(card => ({
         movement: card.querySelector(".batch-movement")?.value || "",
         client: card.querySelector(".batch-client")?.value || "",
+        broker: card.querySelector(".batch-broker")?.value || "",
         items: [...card.querySelectorAll(".batch-asset-row")].map(row => ({
           asset: row.querySelector(".batch-asset-select")?.value || "",
           quantity: Number(row.querySelector(".batch-asset-quantity")?.value || 0)
@@ -260,7 +280,7 @@
         const client = entry.movement === "DISCARD" ? selfClient : entry.client;
         const items = entry.items.filter(item => item.asset && Number.isInteger(item.quantity) && item.quantity > 0);
         if (!client || !items.length) return `${movementLabel(entry.movement) || "Movement"} · Select client and assets`;
-        return `${movementLabel(entry.movement)} · ${client} · ${items.map(item => `${item.quantity.toLocaleString("en-GB")} × ${item.asset}`).join(" · ")}`;
+        return `${movementLabel(entry.movement)} · ${client}${entry.broker ? ` · Broker: ${entry.broker}` : ""} · ${items.map(item => `${item.quantity.toLocaleString("en-GB")} × ${item.asset}`).join(" · ")}`;
       });
       target.innerHTML = lines.map(line => `<span class="preview-batch-line">${escapeHtml(line)}</span>`).join("");
     }
@@ -289,7 +309,7 @@
     function setAllDisabled(disabled) {
       container.querySelectorAll("select,input,button").forEach(control => control.disabled = Boolean(disabled));
       addButton && (addButton.disabled = Boolean(disabled));
-      container.querySelectorAll(".batch-client").forEach(select => {
+      container.querySelectorAll(".batch-client,.batch-broker").forEach(select => {
         if (!disabled) {
           const movement = select.closest(".movement-entry-card")?.querySelector(".batch-movement")?.value;
           select.disabled = movement === "DISCARD";

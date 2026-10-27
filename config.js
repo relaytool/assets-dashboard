@@ -46,6 +46,7 @@ const CONFIG = {
         "Client List",
 
     CLIENT_TYPES_SHEET_NAME: "Client Types",
+    BROKERS_SHEET_NAME: "Brokers",
 
     LOCATION:
         "UB11",
