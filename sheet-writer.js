@@ -182,7 +182,7 @@
       header.push(TRANSACTION_BALANCE_HEADER);
       changed = true;
     }
-    if (!normalized.includes("broker")) {
+    if (!normalized.some(value => ["broker", "broker name"].includes(value))) {
       header.push(BROKER_HEADER);
       changed = true;
     }

@@ -315,7 +315,7 @@
     if(!norm.some(h=>["comment","comments","notes"].includes(h))){header.push("Comment");norm.push("comment");changed=true;}
     if(!norm.some(h=>["image link","image","photo","picture","photo link","attachment","drive link"].includes(h))){header.push("Image Link");norm.push("image link");changed=true;}
     if(!norm.some(h=>["inventory balance","warehouse balance","balance after movement"].includes(h))){header.push("Inventory Balance");norm.push("inventory balance");changed=true;}
-    if(!norm.includes("broker")){header.push("Broker");norm.push("broker");changed=true;}
+    if(!norm.some(value=>["broker","broker name"].includes(value))){header.push("Broker");norm.push("broker");changed=true;}
     if(changed){
       const range=`${quoteSheetName(CONFIG.TRANSACTIONS_SHEET_NAME)}!A1`;
       await sheetsPut(`/${encodeURIComponent(ledgerId)}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,{range,majorDimension:"ROWS",values:[header]});

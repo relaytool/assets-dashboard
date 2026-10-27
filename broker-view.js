@@ -128,6 +128,15 @@
     const area=k=>`${path(k)} L${X(points.length-1)},${Y(0)} L${X(0)},${Y(0)} Z`;
     const dots=points.map(([d,v],i)=>['sent','received'].map(k=>`<circle cx="${X(i)}" cy="${Y(v[k])}" r="4" class="broker-chart-dot ${k}"><title>${esc(label(d))} · ${k==='sent'?'Sent':'Received'}: ${number(v[k])}</title></circle>`).join('')).join('');
     el.innerHTML=`<div class="broker-chart-key"><span><i class="sent"></i>Sent</span><span><i class="received"></i>Received</span></div><div class="broker-chart-scroll"><svg viewBox="0 0 ${width} ${height}" style="min-width:${width}px" aria-label="${esc(asset)} sent and received graph" role="img"><defs><linearGradient id="broker-blue-area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4377ef" stop-opacity=".17"/><stop offset="1" stop-color="#4377ef" stop-opacity="0"/></linearGradient></defs>${lines}${ticks}<path d="${area('sent')}" fill="url(#broker-blue-area)"/><path d="${path('sent')}" class="broker-chart-sent"/><path d="${path('received')}" class="broker-chart-received"/>${dots}</svg></div>`;
+    // When the chart needs horizontal scrolling, open at the latest readings.
+    // On phones the most recent activity matters more than the oldest dates.
+    const scroller = el.querySelector(".broker-chart-scroll");
+    if (scroller) {
+      requestAnimationFrame(() => {
+        if (!scroller.isConnected) return;
+        scroller.scrollLeft = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+      });
+    }
   }
   function render({rows,brokers}) {
     if(!$('brokers-section'))return;

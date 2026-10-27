@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="app-ui-polish.css?v=global-search-checklist-20261016-v2">
     <link rel="stylesheet" href="mobile-graph-polish.css?v=audit-date-range-20261026-v1">
     <link rel="stylesheet" href="audit-trail-polish.css?v=20261026-v1">
-    <link rel="stylesheet" href="broker-graph-polish.css?v=broker-view-20261027-v1">
+    <link rel="stylesheet" href="broker-graph-polish.css?v=broker-workspace-20261027-v2">
+    <link rel="stylesheet" href="release-ui.css?v=20261027-v2">
 </head>
 
 <body>
@@ -37,7 +38,7 @@
             <h1>Assets Dashboard</h1>
 
             <p class="muted">
-                UB11 routine inbound, outbound and warehouse asset inventory.
+                UB11 warehouse inventory, outbound planning and client movements.
             </p>
         </div>
 
@@ -89,8 +90,9 @@
 <a href="alerts.html">Alerts <span id="alerts-nav-badge" class="nav-alert-badge hidden">0</span></a>
 <a href="index.html#warehouse-section">Warehouse</a>
 <a href="index.html#clients-section">Clients</a>
-<a href="index.html#brokers-section">Brokers</a>
+<a href="broker.html">Broker view</a>
 <a href="index.html#audit-trail">Audit trail</a>
+<a href="https://relaytool.github.io/AssetsArea/" target="_blank" rel="noopener noreferrer">Assets Area</a>
 <a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a>
 <a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a>
 <a href="https://relaytool.github.io/dailyreport/transactions.html" target="_blank" rel="noopener">Receipts</a>
@@ -261,141 +263,9 @@
             <div id="warehouse-assets" class="warehouse-assets-grid"></div>
         </section>
 
-
-        <!-- CLIENT ASSET OVERVIEW -->
-
-        <section id="clients-section" class="card clients-section">
-
-            <div class="section-heading client-section-heading">
-
-                <div>
-
-                    <div class="eyebrow">
-                        TODAY
-                    </div>
-
-                    <h2>
-                        Assets with clients
-                    </h2>
-
-                    <p class="muted">
-                        
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="client-search-wrap">
-
-                <input
-                    id="client-search"
-                    class="client-search"
-                    type="search"
-                    placeholder="Search clients..."
-                    autocomplete="off"
-                    aria-label="Search clients"
-                >
-
-            </div>
-
-
-            <div
-                id="client-cards"
-                class="client-cards"
-            ></div>
-
-        </section>
-
-
-        <!-- BROKER VIEW -->
-        <section id="brokers-section" class="card broker-section" aria-label="Broker view">
-            <div class="broker-section-head"><div><div class="eyebrow">BROKER LEDGER</div>
-                <h2>Broker view</h2><p class="muted">Track movements and outstanding assets for clients managed by each broker.</p>
-            </div><span class="broker-scope-pill">Tagged transactions only</span></div>
-            <div class="broker-filter-bar" aria-label="Broker filters">
-                <label>Broker<select id="broker-select"><option value="">Choose a broker</option></select></label>
-                <label>Client<select id="broker-client"><option value="">All clients</option></select></label>
-                <label>Asset type<select id="broker-asset"><option value="">All asset types</option></select></label>
-                <label>Time period<select id="broker-period"><option value="all">All history</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="custom">Custom range</option></select></label>
-                <button id="broker-reset" type="button" class="secondary">Clear</button>
-            </div>
-            <div id="broker-date-fields" class="broker-date-fields hidden"><label>From<input id="broker-from" type="date"></label><label>To<input id="broker-to" type="date"></label></div>
-            <div id="broker-cards" class="broker-cards" aria-label="Choose a broker"></div>
-            <div id="broker-details" class="broker-details"></div>
-            <div class="broker-analysis">
-              <section aria-label="Broker movement trend">
-                <div class="broker-analysis-head"><div><div class="eyebrow">MOVEMENT TREND</div><h3 id="broker-trend-title">Sent vs received</h3></div>
-                  <div class="broker-chart-switch" role="group" aria-label="Broker graph timeframe"><button type="button" data-broker-graph-range="7d" class="is-active" aria-pressed="true">7D</button><button type="button" data-broker-graph-range="30d" aria-pressed="false">30D</button><button type="button" data-broker-graph-range="90d" aria-pressed="false">90D</button><button type="button" data-broker-graph-range="all" aria-pressed="false">All</button></div></div>
-                <div id="broker-trend" aria-live="polite"></div>
-              </section>
-              <section aria-label="Broker transaction history"><div class="broker-analysis-head"><div><div class="eyebrow">TRANSACTIONS</div><h3>Movement history</h3></div></div><div id="broker-history" class="broker-history"></div></section>
-            </div>
-        </section>
-
-        <!-- LOADS -->
-
-        <div class="section-grid">
-
-            <!-- INBOUND -->
-
-            <section class="card load-section">
-
-                <div class="section-heading">
-
-                    <div>
-
-                        <div class="eyebrow">
-                            TODAY
-                        </div>
-
-                        <h2>
-                            Inbound loads
-                        </h2>
-
-                    </div>
-
-                    <span
-                        id="inbound-badge"
-                        class="badge"
-                    >
-                        0
-                    </span>
-
-                </div>
-
-
-                <div class="table-wrap">
-
-                    <table>
-
-                        <thead>
-
-                            <tr>
-                                <th>Client</th>
-                                <th>Schedule</th>
-                                <th>Asset</th>
-                                <th class="num">Qty</th>
-                                <th>Destination</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody
-                            id="inbound-body"
-                        ></tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-
-            <!-- OUTBOUND -->
-
-            <section class="card load-section">
+        <!-- OUTBOUND LOADS: TODAY -->
+        <div class="outbound-warehouse-slot">
+<section class="card load-section">
 
                 <div class="section-heading">
 
@@ -448,8 +318,55 @@
                 </div>
 
             </section>
-
         </div>
+
+        <!-- CLIENT ASSET OVERVIEW -->
+
+        <section id="clients-section" class="card clients-section">
+
+            <div class="section-heading client-section-heading">
+
+                <div>
+
+                    <div class="eyebrow">
+                        TODAY
+                    </div>
+
+                    <h2>
+                        Assets with clients
+                    </h2>
+
+                    <p class="muted">
+                        
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="client-search-wrap">
+
+                <input
+                    id="client-search"
+                    class="client-search"
+                    type="search"
+                    placeholder="Search clients..."
+                    autocomplete="off"
+                    aria-label="Search clients"
+                >
+
+            </div>
+
+
+            <div
+                id="client-cards"
+                class="client-cards"
+            ></div>
+
+        </section>
+
+
 
 
         <!-- MOVEMENT -->
@@ -970,6 +887,20 @@
     </div>
 </div>
 
+<div id="broker-edit-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="broker-edit-title">
+  <div class="modal-backdrop" data-close-broker-edit></div>
+  <div class="modal-card broker-edit-dialog">
+    <div class="modal-header"><div><div class="eyebrow">AUDIT TRAIL</div><h2 id="broker-edit-title">Edit movement broker</h2></div><button type="button" id="broker-edit-close" class="icon-button" aria-label="Close broker editor">×</button></div>
+    <form id="broker-edit-form">
+      <p id="broker-edit-context" class="muted"></p>
+      <label class="broker-edit-field">Broker <select id="broker-edit-select" required></select></label>
+      <p class="broker-edit-help">Only the Broker column will change. Client, asset quantities and inventory balances stay untouched.</p>
+      <p id="broker-edit-status" class="status" role="status" aria-live="polite"></p>
+      <div class="broker-edit-actions"><button id="broker-edit-cancel" type="button" class="secondary">Cancel</button><button id="broker-edit-save" type="submit" class="primary">Save broker</button></div>
+    </form>
+  </div>
+</div>
+
 <script
       src="https://accounts.google.com/gsi/client"
       async
@@ -983,7 +914,6 @@
 <script src="transaction-display-utils.js?v=broker-view-20261027-v1"></script>
 <script src="routine-alert-utils.js?v=asset-tools-20261014-v1"></script>
 <script src="dashboard-features.js?v=client-types-shein-20261026-v1"></script>
-<script src="broker-view.js?v=broker-view-20261027-v1"></script>
 <script src="dashboard.js?v=broker-view-20261027-v1"></script>
 
 </body>

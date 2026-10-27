@@ -27,6 +27,8 @@
     const graphRanges = {client: "7d", movement: "7d", quantity: "7d"};
     let currentClientGraph = null;
     let currentWarehouseGraph = null;
+    let brokerEditItems = [];
+    let brokerEditBusy = false;
 
 
     let movementSubmitBusy = false;
@@ -307,6 +309,8 @@ document.addEventListener(
                 renderAudit();
                 return;
             }
+            const editBroker = event.target.closest("[data-audit-edit-broker-index]");
+            if (editBroker) { openBrokerEditor(Number(editBroker.dataset.auditEditBrokerIndex)); return; }
             const button = event.target.closest("[data-info-index]");
             if (button) openInfoModal(Number(button.dataset.infoIndex));
         });
@@ -316,6 +320,15 @@ document.addEventListener(
                 auditOpen.set(details.dataset.auditCategory, details.open);
             }
         }, true);
+        $("broker-edit-form")?.addEventListener("submit", saveBrokerEdit);
+        $("broker-edit-close")?.addEventListener("click", closeBrokerEditor);
+        $("broker-edit-cancel")?.addEventListener("click", closeBrokerEditor);
+        $("broker-edit-modal")?.addEventListener("click", event => {
+            if (event.target.closest("[data-close-broker-edit]")) closeBrokerEditor();
+        });
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape" && !$("broker-edit-modal")?.classList.contains("hidden") && !brokerEditBusy) closeBrokerEditor();
+        });
         try { sheinEstimateEnabled = localStorage.getItem(SHEIN_ESTIMATE_PREF) !== "false"; }
         catch (_) { sheinEstimateEnabled = true; }
         const estimateToggle = $("shein-outbound-estimate");
@@ -861,7 +874,7 @@ function bindQuickMenu() {
                 }
             }
             state.transactions = [
-                ...parseTransactions(transactionRows),
+                ...parseTransactions(transactionRows, CONFIG.TRANSACTIONS_SHEET_NAME),
                 ...parseTransactions(operationRows).filter(item => item.client || item.asset),
                 ...parseTransactions(adjustmentRows).map((item, index) => ({
                     ...item,
@@ -1497,7 +1510,7 @@ function bindQuickMenu() {
     }
 
 
-    function parseTransactions(rows) {
+    function parseTransactions(rows, sourceSheet = "") {
         if (!rows.length) return [];
         const header = rows[0].map(normalizeHeader);
         const idx = {
@@ -1513,7 +1526,9 @@ function bindQuickMenu() {
             broker: findColumn(header, ["broker", "broker name"])
         };
 
-        return rows.slice(1).map(row => ({
+        return rows.slice(1).map((row, index) => ({
+            sourceSheet,
+            sheetRow: index + 2,
             timestamp: idx.timestamp >= 0 ? row[idx.timestamp] ?? "" : "",
             client: idx.client >= 0 ? row[idx.client] ?? "" : "",
             movement: idx.movement >= 0 ? row[idx.movement] ?? "" : "",
@@ -1596,7 +1611,7 @@ function bindQuickMenu() {
             normalized.push("inventory balance");
             changed = true;
         }
-        if (!normalized.includes("broker")) {
+        if (!normalized.some(name => ["broker", "broker name"].includes(name))) {
             header.push("Broker");
             normalized.push("broker");
             changed = true;
@@ -2561,18 +2576,10 @@ function bindQuickMenu() {
         populateDashboardFilters();
         renderWarehouseAssets();
         renderClientCards();
-        renderBrokerView();
         renderAudit();
         renderGlobalSearch();
         renderFilteredLoadTables();
         updateDashboardDataVersionStatus();
-    }
-
-    function renderBrokerView() {
-        window.FM_BROKER_VIEW?.render?.({
-            rows: getDashboardTransactions().filter(row => !row.isLedgerAdjustment && !FM_DASHBOARD_FEATURES.isAdjustment(row)),
-            brokers: state.brokers
-        });
     }
 
     function filteredDashboardTransactions() {
@@ -3959,7 +3966,6 @@ function bindQuickMenu() {
         const due = dateOk
             ? state.todayLoads.filter(item => clientOk(item) && assetOk(item))
             : [];
-        const inbound = due.filter(item => item.direction === "Inbound");
         const plannedOutbound = due.filter(item => item.direction === "Outbound");
         const estimate = sheinEstimateEnabled && dateOk
             ? FM_DASHBOARD_FEATURES.estimateSheinOutbound(state.transactions)
@@ -3978,13 +3984,10 @@ function bindQuickMenu() {
             detail.classList.toggle("hidden", !detail.textContent);
         }
 
-        $("inbound-badge").textContent = inbound.length.toLocaleString();
         $("outbound-badge").textContent = outbound.length.toLocaleString();
-        renderLoadTable($("inbound-body"), inbound);
         renderLoadTable($("outbound-body"), outbound);
 
-        [document.querySelector("#inbound-body")?.closest(".load-section"),
-         document.querySelector("#outbound-body")?.closest(".load-section")]
+        [document.querySelector("#outbound-body")?.closest(".load-section")]
             .filter(Boolean)
             .forEach(section => {
                 const el = section.querySelector(".filter-note");
@@ -4244,8 +4247,122 @@ function bindQuickMenu() {
             </div>
             <div class="transaction-card-meta"><span class="transaction-card-line-count">${group.totalLines} ledger line${group.totalLines === 1 ? "" : "s"}</span>${group.broker ? `<span class="broker-transaction-tag">Broker · ${escapeHtml(group.broker)}</span>` : ""}${group.vehicleReg ? `<span class="transaction-vehicle-reg"><span>Vehicle reg</span><strong>${escapeHtml(group.vehicleReg)}</strong></span>` : ""}${attachment ? `<span class="transaction-attachment-mark">${attachment}</span>` : ""}</div>
             ${lines}
-            <div class="transaction-card-footer"><span class="muted">${group.totalQuantity.toLocaleString("en-GB")} total quantity</span><button type="button" class="secondary" ${actionAttr}="${index}">View details</button></div>
+            <div class="transaction-card-footer"><span class="muted">${group.totalQuantity.toLocaleString("en-GB")} total quantity</span><div class="transaction-card-actions">${actionAttr === "data-info-index" && state.dashboardSource.kind === "current" && group.items.some(item => item.sourceSheet === CONFIG.TRANSACTIONS_SHEET_NAME && item.sheetRow > 1) ? `<button type="button" class="secondary broker-edit-trigger" data-audit-edit-broker-index="${index}">${group.broker ? "Edit broker" : "Add broker"}</button>` : ""}<button type="button" class="secondary" ${actionAttr}="${index}">View details</button></div></div>
         </article>`;
+    }
+
+    // Broker attribution is the only editable field in historical audit entries.
+    // Validate source row identity before updating because users may sort Sheets.
+    function openBrokerEditor(index) {
+        if (brokerEditBusy || state.dashboardSource.kind !== "current") return;
+        const group = state.auditVisibleRows[index];
+        const items = (group?.items || []).filter(item =>
+            item.sourceSheet === CONFIG.TRANSACTIONS_SHEET_NAME && Number.isInteger(item.sheetRow) && item.sheetRow > 1);
+        if (!items.length) return;
+        brokerEditItems = items;
+        const select = $("broker-edit-select");
+        const selected = String(group.broker || "").trim();
+        const choices = [...new Set([...(state.brokers || []), selected].filter(Boolean))];
+        select.replaceChildren();
+        const empty = document.createElement("option");
+        empty.value = ""; empty.textContent = "Unassigned / remove broker"; select.append(empty);
+        choices.forEach(name => {
+            const option = document.createElement("option");
+            option.value = name; option.textContent = name; select.append(option);
+        });
+        select.value = selected;
+        select.required = false;
+        $("broker-edit-context").textContent = `${group.client} · ${formatTimestamp(group.timestamp)} · ${items.length} transaction line${items.length === 1 ? "" : "s"}`;
+        $("broker-edit-status").textContent = "";
+        $("broker-edit-status").classList.remove("error");
+        $("broker-edit-modal").classList.remove("hidden");
+        select.focus({preventScroll: true});
+    }
+
+    function closeBrokerEditor() {
+        if (brokerEditBusy) return;
+        $("broker-edit-modal")?.classList.add("hidden");
+        brokerEditItems = [];
+    }
+
+    function brokerEditMessage(message, isError = false) {
+        const status = $("broker-edit-status");
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+    }
+
+    function identicalMovement(original, row, columns) {
+        const val = name => String(row[columns[name]] ?? "").trim();
+        const trim = value => String(value ?? "").trim();
+        const sameIfPresent = (key, originalValue) => columns[key] < 0 || trim(originalValue) === val(key);
+        return trim(original.timestamp) === val("timestamp") &&
+            trim(original.client) === val("client") &&
+            trim(original.movement).toUpperCase() === val("movement").toUpperCase() &&
+            trim(original.asset) === val("asset") &&
+            Number(original.quantity) === numericValue(row[columns.quantity]) &&
+            sameIfPresent("comment", original.comment) &&
+            sameIfPresent("user", original.user) &&
+            sameIfPresent("image", original.image);
+    }
+
+    async function saveBrokerEdit(event) {
+        event.preventDefault();
+        if (brokerEditBusy || !brokerEditItems.length) return;
+        if (state.dashboardSource.kind !== "current") {
+            brokerEditMessage("Switch to the live ledger before editing a broker.", true); return;
+        }
+        const value = String($("broker-edit-select")?.value || "").trim();
+        if (value && !(state.brokers || []).some(name => name.toLowerCase() === value.toLowerCase())) {
+            brokerEditMessage("Select a broker from the Brokers sheet.", true); return;
+        }
+        brokerEditBusy = true;
+        const save = $("broker-edit-save");
+        save.disabled = true;
+        brokerEditMessage("Checking the transaction rows…");
+        try {
+            await ensureWriteAccess();
+            const ledger = CONFIG.INVENTORY_LEDGER_SHEET_ID;
+            const live = await getValues(ledger, CONFIG.TRANSACTIONS_SHEET_NAME);
+            const headers = (live[0] || []).map(normalizeHeader);
+            const column = (...names) => headers.findIndex(name => names.includes(name));
+            const idx = {
+                timestamp: column("timestamp", "date", "datetime"), client: column("client", "client name"),
+                movement: column("movement", "type", "direction"), asset: column("asset", "asset name", "item"),
+                quantity: column("quantity", "qty"), broker: column("broker", "broker name"),
+                user: column("user", "entered by", "email"), comment: column("comment", "comments", "notes"),
+                image: column("image link", "image", "photo", "picture", "photo link", "attachment", "drive link")
+            };
+            if ([idx.timestamp, idx.client, idx.movement, idx.asset, idx.quantity, idx.broker].some(i => i < 0)) throw new Error("The transaction headings changed. Refresh before editing.");
+            for (const item of brokerEditItems) {
+                const row = live[item.sheetRow - 1];
+                if (!row || !identicalMovement(item, row, idx) ||
+                    String(row[idx.broker] ?? "").trim() !== String(item.broker || "").trim()) {
+                    throw new Error("A transaction changed in Google Sheets. Refresh and review before saving.");
+                }
+            }
+            const colLetter = columnLetter(idx.broker + 1);
+            const updates = brokerEditItems.map(item => {
+                const range = `${quoteSheetName(CONFIG.TRANSACTIONS_SHEET_NAME)}!${colLetter}${item.sheetRow}`;
+                return {range, majorDimension: "ROWS", values: [[value]]};
+            });
+            brokerEditMessage("Saving broker to Google Sheets…");
+            await sheetsPost(`/${encodeURIComponent(ledger)}/values:batchUpdate`, {
+                valueInputOption: "RAW", data: updates
+            });
+            brokerEditItems.forEach(item => { item.broker = value; });
+            brokerEditBusy = false;
+            save.disabled = false;
+            closeBrokerEditor();
+            renderAudit();
+            setSyncStatus(value ? `Broker updated to ${value}.` : "Broker assignment removed.");
+        } catch (error) {
+            console.error("Broker update failed", error);
+            brokerEditMessage(error.message || "Unable to update broker. Refresh and try again.", true);
+        } finally {
+            brokerEditBusy = false;
+            save.disabled = false;
+        }
     }
 
     function driveFileIdFromLink(url) {

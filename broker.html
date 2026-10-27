@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101727"><title>Broker View · FM Operations</title>
+<link rel="stylesheet" href="dashboard.css?v=20261027-v2"><link rel="stylesheet" href="app-ui-polish.css?v=20261027-v2"><link rel="stylesheet" href="broker-graph-polish.css?v=20261027-v2"><link rel="stylesheet" href="release-ui.css?v=20261027-v2"></head>
+<body class="broker-page">
+<div id="connection-loading" class="connection-loading hidden" role="status" aria-live="polite" aria-hidden="true"><div class="connection-loading-card"><span class="loading-spinner" aria-hidden="true"></span><strong id="connection-loading-title">Connecting to Google Sheets…</strong></div></div>
+<main class="app-shell">
+<header class="topbar"><div><div class="eyebrow">FM OPERATIONS / BROKERS</div><h1>Broker View</h1><p class="muted">Movements and asset balances by broker, client and asset type.</p></div>
+<div class="account-area"><img id="user-photo" class="user-photo hidden" alt="Google profile"><div><div id="user-name" class="user-name">Not signed in</div><div id="user-email" class="muted"></div></div><button type="button" id="sign-out" class="secondary hidden">Sign out</button></div></header>
+<nav class="quick-nav" aria-label="Quick links"><button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="quick-links"><span class="menu-toggle-icon">☰</span><span>Quick links</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span></button><div id="quick-links" class="menu-links">
+<a href="index.html">Dashboard</a><a href="asset-tools.html">Asset tools</a><a href="movement-logger.html">Record movement</a><a href="routine-outbounds.html">Routine outbounds</a><a href="checklist.html">Shift checklist</a><a href="alerts.html">Alerts</a><a href="index.html#warehouse-section">Warehouse</a><a href="index.html#clients-section">Clients</a><a href="broker.html" class="active" aria-current="page">Broker view</a><a href="index.html#audit-trail">Audit trail</a><a href="https://relaytool.github.io/AssetsArea/" target="_blank" rel="noopener noreferrer">Assets Area</a><a href="https://relaytool.github.io/assets-reporting/" target="_blank" rel="noopener">EOD routines</a><a href="https://relaytool.github.io/dailyreport/" target="_blank" rel="noopener">Daily reporting</a><a href="https://relaytool.github.io/dailyreport/transactions.html" target="_blank" rel="noopener">Receipts</a>
+</div></nav>
+<section id="login-card" class="card login-card"><div class="eyebrow">BROKER ACCESS</div><h2>Connect to your ledger</h2><p class="muted">Use your Google account to open the Broker View.</p><div id="google-signin-button"></div><button id="grant-access" type="button" class="primary hidden">Connect Google Sheets</button><p id="auth-status" class="status" role="status" aria-live="polite"></p></section>
+<section id="broker-workspace" class="hidden">
+<div class="toolbar card broker-toolbar"><div><strong id="workbook-name">Assets Inventory Ledger</strong><p id="sync-status" class="muted" role="status">Ready to sync</p></div><div class="broker-toolbar-actions"><a class="secondary broker-audit-link" href="index.html#audit-trail">Edit brokers in audit trail</a><button id="refresh" type="button" class="secondary">Refresh data</button></div></div>
+        <!-- BROKER VIEW -->
+        <section id="brokers-section" class="card broker-section" aria-label="Broker view">
+            <div class="broker-section-head"><div><div class="eyebrow">BROKER LEDGER</div>
+                <h2>Broker view</h2><p class="muted">Track movements and outstanding assets for clients managed by each broker.</p>
+            </div><span class="broker-scope-pill">Tagged transactions only</span></div>
+            <div class="broker-filter-bar" aria-label="Broker filters">
+                <label>Broker<select id="broker-select"><option value="">Choose a broker</option></select></label>
+                <label>Client<select id="broker-client"><option value="">All clients</option></select></label>
+                <label>Asset type<select id="broker-asset"><option value="">All asset types</option></select></label>
+                <label>Time period<select id="broker-period"><option value="all">All history</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="custom">Custom range</option></select></label>
+                <button id="broker-reset" type="button" class="secondary">Clear</button>
+            </div>
+            <div id="broker-date-fields" class="broker-date-fields hidden"><label>From<input id="broker-from" type="date"></label><label>To<input id="broker-to" type="date"></label></div>
+            <div id="broker-cards" class="broker-cards" aria-label="Choose a broker"></div>
+            <div id="broker-details" class="broker-details"></div>
+            <div class="broker-analysis">
+              <section aria-label="Broker movement trend">
+                <div class="broker-analysis-head"><div><div class="eyebrow">MOVEMENT TREND</div><h3 id="broker-trend-title">Sent vs received</h3></div>
+                  <div class="broker-chart-switch" role="group" aria-label="Broker graph timeframe"><button type="button" data-broker-graph-range="7d" class="is-active" aria-pressed="true">7D</button><button type="button" data-broker-graph-range="30d" aria-pressed="false">30D</button><button type="button" data-broker-graph-range="90d" aria-pressed="false">90D</button><button type="button" data-broker-graph-range="all" aria-pressed="false">All</button></div></div>
+                <div id="broker-trend" aria-live="polite"></div>
+              </section>
+              <section aria-label="Broker transaction history"><div class="broker-analysis-head"><div><div class="eyebrow">TRANSACTIONS</div><h3>Movement history</h3></div></div><div id="broker-history" class="broker-history"></div></section>
+            </div>
+        </section>
+</section></main>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.dispatchEvent(new Event('fm-google-loaded'))"></script>
+<script src="config.js?v=20261027-v2"></script><script src="broker-utils.js?v=20261027-v2"></script><script src="broker-view.js?v=20261027-v2"></script><script src="broker-page.js?v=20261027-v2"></script></body></html>
